@@ -1,0 +1,7 @@
+<UXML xmlns="UnityEngine.UIElements" xmlns:ue="UnityEditor.UIElements" xmlns:ce="CustomUIElements">
+    <VisualElement name="importMaterialColoursGroup" class="horizontal-group import-material-colors-group">
+        <Label name="importMaterialColoursName" text="Model" />
+        <Button name="enableMaterialColoursButton" text="Enable" />
+        <Button name="disableMaterialColoursButton" text="Disable" />
+    </VisualElement>
+</UXML>
