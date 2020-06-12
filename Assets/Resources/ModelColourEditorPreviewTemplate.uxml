@@ -1,0 +1,10 @@
+<UXML xmlns="UnityEngine.UIElements" xmlns:ue="UnityEditor.UIElements">
+    <Label class="preview__label" text="Current Mesh Colours" />
+    <ScrollView mode="Horizontal">
+        <VisualElement name="previewElementContainer" class="preview__color-container">
+            <VisualElement class="preview__color-element" />
+        </VisualElement>
+    </ScrollView>
+    <TextField name ="previewHexField" class="preview__hex" label="Hex" />
+    <TextElement name="previewNoColoursSet" class="preview__no-colours-set" text="No colours set" />
+</UXML>
