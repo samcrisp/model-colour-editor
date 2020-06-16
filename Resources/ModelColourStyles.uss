@@ -134,12 +134,21 @@ ModelColourEditorPreviewElement
 
 .colour-picker-asset-container
 {
+    display: flex;
+    flex-direction: row;
+}
 
+.colour-picker-asset-container ObjectField
+{
+    flex-grow: 1;
+    flex-shrink: 1;
 }
 
 .new-button
 {
-    width: 20px;
+    width: 18px;
+    font-size: 18px;
+    height: 18px;
 }
 
 .footer

@@ -3,13 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-public static class EditorMenuItems
+namespace ModelColourEditor
 {
-    private const string TOP = "Window/";
-
-    [MenuItem(TOP + "Open Model Colour Editor", false, 50)]
-    public static void OpenModelColourEditor()
+    public static class EditorMenuItems
     {
-        ModelColourEditor.OpenWindow();
+        private const string TOP = "Window/";
+
+        [MenuItem(TOP + "Open Model Colour Editor", false, 50)]
+        public static void OpenModelColourEditor()
+        {
+            ModelColourEditor.OpenWindow();
+        }
     }
 }

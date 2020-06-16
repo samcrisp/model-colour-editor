@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public static class VisualElementExtensions
+namespace ModelColourEditor
 {
-    public static void SetVisible(this VisualElement element, bool visible) => element.EnableInClassList("hidden", !visible);
+    public static class VisualElementExtensions
+    {
+        public static void SetVisible(this VisualElement element, bool visible) => element.EnableInClassList("hidden", !visible);
+    }
 }
