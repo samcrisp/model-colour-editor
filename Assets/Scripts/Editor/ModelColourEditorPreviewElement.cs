@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace CustomUIElements
+namespace ModelColourEditor
 {
     public class ModelColourEditorPreviewElement : VisualElement
     {

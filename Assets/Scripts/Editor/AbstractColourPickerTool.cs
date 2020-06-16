@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class AbstractColourPickerTool : ScriptableObject
+namespace ModelColourEditor
 {
-    public abstract Color? GetColor(Mesh mesh);
+    public abstract class AbstractColourPickerTool : ScriptableObject
+    {
+        public abstract Color? GetColor(Mesh mesh);
+    }
 }

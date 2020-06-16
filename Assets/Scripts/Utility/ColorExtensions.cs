@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class ColorExtensions
+namespace ModelColourEditor
 {
-    public static Color ToAlpha(this Color color, float a)
+	public static class ColorExtensions
 	{
-		color.a = a;
-		return color;
+		public static Color ToAlpha(this Color color, float a)
+		{
+			color.a = a;
+			return color;
+		}
 	}
 }

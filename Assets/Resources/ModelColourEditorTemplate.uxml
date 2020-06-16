@@ -1,4 +1,4 @@
-<UXML xmlns="UnityEngine.UIElements" xmlns:ue="UnityEditor.UIElements" xmlns:ce="CustomUIElements">
+<UXML xmlns="UnityEngine.UIElements" xmlns:ue="UnityEditor.UIElements" xmlns:ce="ModelColourEditor">
     <VisualElement class="root">
         <ScrollView class="sections">
 
@@ -70,7 +70,7 @@
                 <TextElement class="section-header" text="Colour Picker Tools" />
                 <VisualElement class="colour-picker-asset-container">
                     <ue:ObjectField name="colourPickerAsset" label="Colour Picker Asset" />
-                    <Button name="newColourPickerButton" class="new-button" />
+                    <Button name="newColourPickerButton" class="new-button" text="+" />
                 </VisualElement>
                 <Button name="colourPickerSetColourButton" text="Set Colours" />
             </VisualElement>

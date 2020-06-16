@@ -1,0 +1,11 @@
+using UnityEngine;
+using ModelColourEditor;
+
+public class #SCRIPTNAME# : AbstractColourPickerTool
+{
+    public override Color? GetColor(Mesh mesh)
+    {
+        // Return your colour picking here
+        return null;
+    }
+}

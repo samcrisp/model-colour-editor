@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace CustomUIElements
+namespace ModelColourEditor
 {
     public class ModelColourEditorImportMaterialsElement : VisualElement
     {
