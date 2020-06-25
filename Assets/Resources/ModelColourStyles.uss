@@ -85,19 +85,31 @@ ModelColourEditorPreviewElement
 .preview__color-container
 {
     height: 50px;
+    flex-grow: 1;
     min-width: 200px;
     display: flex;
     flex-direction: row;
     align-items: stretch;
+    margin-right: 3px;
+}
+
+ModelColourEditorPreviewElement.expanded #unity-content-container
+{
+    flex-grow: 1;
 }
 
 .preview__color-element
 {
     flex-grow: 1;
-    min-width: 20px;
+    flex-shrink: 0;
+    min-width: 17px;
     background-color: #FFFFFF;
     border-width: 1px;
     border-color: #939393;
+    -unity-text-align: middle-center;
+    font-size: 11px;
+    padding-left: 2px;
+    padding-right: 2px;
 }
 
 .preview__color-element:hover
