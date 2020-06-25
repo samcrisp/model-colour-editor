@@ -60,7 +60,7 @@ namespace ModelColourEditor
         private System.Diagnostics.Stopwatch _stopwatch = new System.Diagnostics.Stopwatch();
         private float _stopwatchThreshold;
         private Queue<System.Action> _taskQueue = new Queue<System.Action>();
-        private MeshFilter[] _meshFilters;
+        private List<MeshFilter> _meshFilters;
 
         public static void OpenWindow()
         {
@@ -168,8 +168,6 @@ namespace ModelColourEditor
 
             GetSelection();
 
-            _taskQueue.Enqueue(UpdateEditor);
-
             _coroutine = this.StartCoroutine(RunQueue());
         }
 
@@ -178,7 +176,6 @@ namespace ModelColourEditor
             _selectedMeshes.Clear();
             _selectedModels.Clear();
             _previewColours.Clear();
-            // _meshModelDictionary.Clear();
 
             _hasSelection = Selection.activeObject != null;
             
@@ -206,15 +203,12 @@ namespace ModelColourEditor
                 }
             }
 
-            // _taskQueue.Enqueue(GetSceneReferences);
-            GetSceneReferences();
+            _taskQueue.Enqueue(GetSceneReferences);
         }
 
         private void GetSceneReferences()
         {
-            _meshFilters = FindObjectsOfType<MeshFilter>();
-            Debug.Log($"Mesh filters {_meshFilters.Length}");
-            // _sceneReferencesCount = _selectedMeshes.Sum(m => _meshFilters.Where(mf => mf.sharedMesh == m).Count());
+            _meshFilters = FindObjectsOfType<MeshFilter>().ToList();
             
             _hasEditorVertexColour = false;
             _hasMaterialImportColour = false;
@@ -223,41 +217,29 @@ namespace ModelColourEditor
             foreach(var mesh in _selectedMeshes)
             {
                 _taskQueue.Enqueue(() => GetSceneReferencesForMesh(mesh));
-
-                // foreach(var mf in _meshFilters)
-                // {
-                //     if (mf.sharedMesh == mesh) { _sceneReferencesCount++; }
-                // }
-
-                // if (_hasMaterialImportColour && _hasEditorVertexColour) { continue; }
-
-                // if (!_modelDataDictionary.TryGetValue(_meshModelDictionary[mesh], out var data))
-                // {
-                //     data = CustomAssetData.Get(_meshModelDictionary[mesh]);
-                // }
-
-                // _hasEditorVertexColour |= data?.HasMeshColours ?? false;
-                // _hasMaterialImportColour |= data?.importMaterialColors ?? false;
-                
-                // yield return YieldStopwatch();
             }
 
-            // _hasEditorVertexColour = data.Any(d => d?.HasMeshColours ?? false);
-            // _hasMaterialImportColour = data.Any(d => d?.importMaterialColors ?? false);
+            _taskQueue.Enqueue(UpdateEditor);
         }
 
         private void GetSceneReferencesForMesh(Mesh mesh)
         {
-            foreach (var mf in _meshFilters)
+            for (int i = _meshFilters.Count - 1; i >= 0; i--)
             {
-                if (mf.sharedMesh == mesh) { _sceneReferencesCount++; }
+                if (_meshFilters[i].sharedMesh == mesh)
+                {
+                    _sceneReferencesCount++;
+                    _meshFilters.RemoveAt(i);
+                }
             }
 
             if (_hasMaterialImportColour && _hasEditorVertexColour) { return; }
 
-            if (!_modelDataDictionary.TryGetValue(_meshModelDictionary[mesh], out var data))
+            GameObject model = _meshModelDictionary[mesh];
+            if (!_modelDataDictionary.TryGetValue(model, out var data))
             {
-                data = CustomAssetData.Get(_meshModelDictionary[mesh]);
+                data = CustomAssetData.Get(model);
+                _modelDataDictionary.Add(model, data);
             }
 
             _hasEditorVertexColour |= data?.HasMeshColours ?? false;
@@ -266,8 +248,6 @@ namespace ModelColourEditor
 
         private IEnumerator RunQueue(System.Action callback = null)
         {
-            Debug.Log("started queue");
-
             rootVisualElement.SetEnabled(false);
 
             StopwatchSetup();
@@ -290,8 +270,6 @@ namespace ModelColourEditor
             rootVisualElement.SetEnabled(true);
 
             callback?.Invoke();
-
-            Debug.Log("end queue");
         }
 
         private void GetMeshColorsCoroutine(Mesh mesh)
@@ -302,8 +280,6 @@ namespace ModelColourEditor
                 _meshModelDictionary.Add(mesh, model);
             }
 
-            // var model = _meshModelDictionary[mesh];
-                        
             if (model == null) { return; } // Mesh is a library mesh like the default Unity cube
             
             _selectedMeshes.Add(mesh);
@@ -329,8 +305,6 @@ namespace ModelColourEditor
 
         private void UpdateEditor()
         {
-            Debug.Log($"Updating editor {_sceneReferencesCount}");
-
             int meshesCount = _selectedMeshes.Count;
             int modelsCount = _selectedModels.Count;
 

@@ -41,7 +41,7 @@
             </VisualElement>
 
             <VisualElement class="section">
-                <TextElement class="section-header" text="Set Colour" />
+                <TextElement class="section-header" text="Override Colour" />
                 <VisualElement class="horizontal-group">
                     <VisualElement>
                         <ue:ColorField name="setColourColourPicker" show-alpha="false" />
