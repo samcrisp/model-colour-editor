@@ -70,7 +70,7 @@ namespace ModelColourEditor
             this.EnableInClassList("expanded", false);
             _container.Remove(_remainingElement);
 
-            for (int i = 9; i < _allColors.Count; i++)
+            for (int i = 10; i < _allColors.Count; i++)
             {
                 Color color = _allColors[i];
                 VisualElement colorElement = new VisualElement();
