@@ -12,6 +12,8 @@ namespace ModelColourEditor
         private TextElement _noColoursSet;
         private TextField _hexField;
         private int _selectedIndex;
+        private List<Color> _allColors;
+        private TextElement _remainingElement;
 
         public ModelColourEditorPreviewElement()
         {
@@ -29,19 +31,30 @@ namespace ModelColourEditor
             _hexField = this.Q<TextField>("previewHexField");
         }
 
-        public void SetColors(IEnumerable<Color> colors)
+        public void SetColors(List<Color> colors)
         {
+            this.EnableInClassList("expanded", true);
+            _allColors = colors;
             _container.Clear();
             
-            int count = 0;
-            foreach (var color in colors)
+            for (int i = 0; i < colors.Count; i++)
             {
+                Color color = colors[i];
                 VisualElement colorElement = new VisualElement();
                 colorElement.AddToClassList("preview__color-element");
                 colorElement.style.backgroundColor = color.gamma.ToAlpha(1);
-                colorElement.RegisterCallback<MouseDownEvent, int>((e, i) => SetSelected(i), count);
+                colorElement.RegisterCallback<MouseDownEvent, int>((e, index) => SetSelected(index), i);
                 _container.Add(colorElement);
-                count++;
+
+                if (i == 9 && colors.Count > 10)
+                {
+                    _remainingElement = new TextElement();
+                    _remainingElement.AddToClassList("preview__color-element");
+                    _remainingElement.text = $"+{colors.Count - 9}";
+                    _remainingElement.RegisterCallback<MouseDownEvent>(OnClickRemainingColors);
+                    _container.Add(_remainingElement);
+                    break;
+                }
             }
 
             foreach(var child in this.Children())
@@ -50,6 +63,22 @@ namespace ModelColourEditor
             }
 
             SetSelected(0);
+        }
+
+        private void OnClickRemainingColors(MouseDownEvent evt)
+        {
+            this.EnableInClassList("expanded", false);
+            _container.Remove(_remainingElement);
+
+            for (int i = 9; i < _allColors.Count; i++)
+            {
+                Color color = _allColors[i];
+                VisualElement colorElement = new VisualElement();
+                colorElement.AddToClassList("preview__color-element");
+                colorElement.style.backgroundColor = color.gamma.ToAlpha(1);
+                colorElement.RegisterCallback<MouseDownEvent, int>((e, index) => SetSelected(index), i);
+                _container.Add(colorElement);
+            }
         }
 
         private void SetSelected(int index)

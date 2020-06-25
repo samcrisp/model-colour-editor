@@ -5,16 +5,18 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.EditorCoroutines.Editor;
 
 namespace ModelColourEditor
 {
     public class ModelColourEditor : EditorWindow
     {
+        public const float MAX_MILLISECONDS_PER_FRAME = 33;
+
         private delegate CustomAssetData MeshDataAction(Mesh mesh, CustomAssetData data);
         private delegate CustomAssetData ModelDataAction(GameObject asset, CustomAssetData data);
 
@@ -22,6 +24,7 @@ namespace ModelColourEditor
         private List<GameObject> _selectedModels = new List<GameObject>();
         private List<Color> _previewColours = new List<Color>();
         private Dictionary<Mesh, GameObject> _meshModelDictionary = new Dictionary<Mesh, GameObject>();
+        private Dictionary<GameObject, CustomAssetData> _modelDataDictionary = new Dictionary<GameObject, CustomAssetData>();
 
         private ObjectField _modelField;
         private ObjectField _meshField;
@@ -53,6 +56,11 @@ namespace ModelColourEditor
         private ObjectField _colourPickerAsset;
         private Button _colourPickerSetColourButton;
         private Button _colourPickerNewButton;
+        private EditorCoroutine _coroutine;
+        private System.Diagnostics.Stopwatch _stopwatch = new System.Diagnostics.Stopwatch();
+        private float _stopwatchThreshold;
+        private Queue<System.Action> _taskQueue = new Queue<System.Action>();
+        private MeshFilter[] _meshFilters;
 
         public static void OpenWindow()
         {
@@ -155,8 +163,14 @@ namespace ModelColourEditor
 
         private void OnSelectionChanged()
         {
+            if (_coroutine != null) { this.StopCoroutine(_coroutine); }
+            _taskQueue.Clear();
+
             GetSelection();
-            UpdateEditor();
+
+            _taskQueue.Enqueue(UpdateEditor);
+
+            _coroutine = this.StartCoroutine(RunQueue());
         }
 
         private void GetSelection()
@@ -164,7 +178,7 @@ namespace ModelColourEditor
             _selectedMeshes.Clear();
             _selectedModels.Clear();
             _previewColours.Clear();
-            _meshModelDictionary.Clear();
+            // _meshModelDictionary.Clear();
 
             _hasSelection = Selection.activeObject != null;
             
@@ -183,34 +197,140 @@ namespace ModelColourEditor
                 else if (selection is GameObject)
                 {
                     var meshFilters = (selection as GameObject).GetComponentsInChildren<MeshFilter>();
-
                     IEnumerable<Mesh> meshes = meshFilters.Select(m => m.sharedMesh).Distinct();
 
-                    foreach(var mesh in meshes) 
+                    foreach (var mesh in meshes)
                     {
-                        GameObject model = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GetAssetPath(mesh));
-                        
-                        if (model == null) { continue; } // Mesh is a library mesh like the default Unity cube
-                        
-                        _selectedMeshes.Add(mesh);
-                        _meshModelDictionary[mesh] = model;
-                        _previewColours.AddRange(mesh.colors.Distinct().Where(c => !_previewColours.Contains(c)));
-
-                        if (!_selectedModels.Contains(model)) { _selectedModels.Add(model); }
+                        _taskQueue.Enqueue(() => GetMeshColorsCoroutine(mesh));
                     }
                 }
             }
 
-            _sceneReferencesCount = _selectedMeshes.Sum(m => FindObjectsOfType<MeshFilter>().Where(mf => mf.sharedMesh == m).Count());
+            // _taskQueue.Enqueue(GetSceneReferences);
+            GetSceneReferences();
+        }
 
-            var data = _selectedMeshes.Select(m => CustomAssetData.Get(_meshModelDictionary[m]));
-            _hasEditorVertexColour = data.Any(d => d?.HasMeshColours ?? false);
-            _hasMaterialImportColour = data.Any(d => d?.importMaterialColors ?? false);
+        private void GetSceneReferences()
+        {
+            _meshFilters = FindObjectsOfType<MeshFilter>();
+            Debug.Log($"Mesh filters {_meshFilters.Length}");
+            // _sceneReferencesCount = _selectedMeshes.Sum(m => _meshFilters.Where(mf => mf.sharedMesh == m).Count());
+            
+            _hasEditorVertexColour = false;
+            _hasMaterialImportColour = false;
+            _sceneReferencesCount = 0;
 
+            foreach(var mesh in _selectedMeshes)
+            {
+                _taskQueue.Enqueue(() => GetSceneReferencesForMesh(mesh));
+
+                // foreach(var mf in _meshFilters)
+                // {
+                //     if (mf.sharedMesh == mesh) { _sceneReferencesCount++; }
+                // }
+
+                // if (_hasMaterialImportColour && _hasEditorVertexColour) { continue; }
+
+                // if (!_modelDataDictionary.TryGetValue(_meshModelDictionary[mesh], out var data))
+                // {
+                //     data = CustomAssetData.Get(_meshModelDictionary[mesh]);
+                // }
+
+                // _hasEditorVertexColour |= data?.HasMeshColours ?? false;
+                // _hasMaterialImportColour |= data?.importMaterialColors ?? false;
+                
+                // yield return YieldStopwatch();
+            }
+
+            // _hasEditorVertexColour = data.Any(d => d?.HasMeshColours ?? false);
+            // _hasMaterialImportColour = data.Any(d => d?.importMaterialColors ?? false);
+        }
+
+        private void GetSceneReferencesForMesh(Mesh mesh)
+        {
+            foreach (var mf in _meshFilters)
+            {
+                if (mf.sharedMesh == mesh) { _sceneReferencesCount++; }
+            }
+
+            if (_hasMaterialImportColour && _hasEditorVertexColour) { return; }
+
+            if (!_modelDataDictionary.TryGetValue(_meshModelDictionary[mesh], out var data))
+            {
+                data = CustomAssetData.Get(_meshModelDictionary[mesh]);
+            }
+
+            _hasEditorVertexColour |= data?.HasMeshColours ?? false;
+            _hasMaterialImportColour |= data?.importMaterialColors ?? false;
+        }
+
+        private IEnumerator RunQueue(System.Action callback = null)
+        {
+            Debug.Log("started queue");
+
+            rootVisualElement.SetEnabled(false);
+
+            StopwatchSetup();
+
+            while(_taskQueue.Count > 0)
+            {
+                _taskQueue.Dequeue()();
+
+                if (_stopwatch.ElapsedMilliseconds > _stopwatchThreshold)
+                {
+                    _stopwatch.Stop();
+                    yield return null;
+                    _stopwatchThreshold = _stopwatch.ElapsedMilliseconds + MAX_MILLISECONDS_PER_FRAME;
+                    _stopwatch.Start();
+                }
+            }
+
+            _stopwatch.Stop();
+
+            rootVisualElement.SetEnabled(true);
+
+            callback?.Invoke();
+
+            Debug.Log("end queue");
+        }
+
+        private void GetMeshColorsCoroutine(Mesh mesh)
+        {
+            if (!_meshModelDictionary.TryGetValue(mesh, out var model))
+            {
+                model = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GetAssetPath(mesh));
+                _meshModelDictionary.Add(mesh, model);
+            }
+
+            // var model = _meshModelDictionary[mesh];
+                        
+            if (model == null) { return; } // Mesh is a library mesh like the default Unity cube
+            
+            _selectedMeshes.Add(mesh);
+            _meshModelDictionary[mesh] = model;
+
+            HashSet<Color> colors = new HashSet<Color>();
+            foreach(var color in mesh.colors)
+            {
+                if (colors.Contains(color)) { continue; }
+                colors.Add(color);
+                _previewColours.Add(color);
+            }
+
+            if (!_selectedModels.Contains(model)) { _selectedModels.Add(model); }
+        }
+
+        private void StopwatchSetup()
+        {
+            _stopwatchThreshold = MAX_MILLISECONDS_PER_FRAME;
+            _stopwatch.Reset();
+            _stopwatch.Start();
         }
 
         private void UpdateEditor()
         {
+            Debug.Log($"Updating editor {_sceneReferencesCount}");
+
             int meshesCount = _selectedMeshes.Count;
             int modelsCount = _selectedModels.Count;
 
