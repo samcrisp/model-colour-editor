@@ -8,7 +8,7 @@ namespace ModelColourEditor
 {
     public class AssetPostprocessorVertexColor : AssetPostprocessor
     {
-        private Material _defaultMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Game/Materials/Resources/mat_default_lit.mat");
+        public override int GetPostprocessOrder() => 210;
 
         public void OnPostprocessModel(GameObject root)
         {
@@ -27,9 +27,12 @@ namespace ModelColourEditor
                 if (meshColor.valid)
                 {
                     meshFilter.sharedMesh.SetColors(Enumerable.Repeat(meshColor.color.linear, meshFilter.sharedMesh.vertexCount).ToList());
-                    
-                    Renderer renderer = meshFilter.GetComponent<MeshRenderer>();
-                    renderer.sharedMaterials = Enumerable.Repeat(_defaultMaterial, meshFilter.sharedMesh.subMeshCount).ToArray();
+
+                    if (ModelColourEditorSettings.Instance.defaultMaterial != null)
+                    {
+                        Renderer renderer = meshFilter.GetComponent<MeshRenderer>();
+                        renderer.sharedMaterials = Enumerable.Repeat(ModelColourEditorSettings.Instance.defaultMaterial, meshFilter.sharedMesh.subMeshCount).ToArray();
+                    }
                 }
             }
         }

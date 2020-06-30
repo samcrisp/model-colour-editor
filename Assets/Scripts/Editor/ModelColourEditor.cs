@@ -506,6 +506,7 @@ namespace ModelColourEditor
                     e.menu.AppendAction($"New {name}", action => {
                         // Create new colour picker asset
                         string path = EditorUtility.SaveFilePanelInProject($"Create new {name}", $"New{type.Name}", "asset", "Please enter a file name to save the asset to");
+                        if (path.Length == 0) { return; }
                         var asset = ScriptableObject.CreateInstance(type);
                         AssetDatabase.CreateAsset(asset, path);
                         _colourPickerAsset.value = asset;

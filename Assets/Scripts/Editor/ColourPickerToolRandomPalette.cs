@@ -132,12 +132,16 @@ namespace ModelColourEditor
                 {
                     palette.editor_percentage = Mathf.RoundToInt(palette.probability / totalProbability * 100);
 
+                    if (palette.modifiers == null) { palette.modifiers = new Modifier[0]; }
+
                     foreach(var modifier in palette.modifiers)
                     {
                         modifier.editor_preview = palette.colors[0];
                     }
                 }
             }
+
+            if (finalModifiers == null) { finalModifiers = new Modifier[0]; }
 
             foreach(var modifier in finalModifiers)
             {
