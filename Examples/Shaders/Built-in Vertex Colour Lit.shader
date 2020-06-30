@@ -1,4 +1,4 @@
-﻿Shader "Model Colour Editor/Inbuilt Render Pipeline - Vertex Colour Lit"
+﻿Shader "Model Colour Editor/Built-in Vertex Colour Lit"
 {
     Properties
     {

@@ -8,10 +8,10 @@ namespace ModelColourEditor
 {
     public class AssetPostprocessorMaterialToVertexColor : AssetPostprocessor
     {
-        private Material _defaultMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Game/Materials/Resources/mat_default_lit.mat");
-
         private Dictionary<Renderer, List<Color>> _colors;
         private bool _shouldProcess = false;
+
+        public override int GetPostprocessOrder() => 200;
 
         public void OnPreprocessModel()
         {
@@ -88,7 +88,10 @@ namespace ModelColourEditor
                 // meshFilter.sharedMesh.SetSubMesh(0, new UnityEngine.Rendering.SubMeshDescriptor(0, mesh.vertexCount));
                 // renderer.sharedMaterials = new Material[1] { _defaultMaterial };
 
-                renderer.sharedMaterials = Enumerable.Repeat(_defaultMaterial, meshFilter.sharedMesh.subMeshCount).ToArray();
+                if (ModelColourEditorSettings.Instance.defaultMaterial != null)
+                {
+                    renderer.sharedMaterials = Enumerable.Repeat(ModelColourEditorSettings.Instance.defaultMaterial, meshFilter.sharedMesh.subMeshCount).ToArray();
+                }
             }
 
             Debug.Log($"Imported material to vertex colours {assetPath}");
