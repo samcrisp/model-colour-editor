@@ -91,6 +91,6 @@ ModelImporter:
   humanoidOversampling: 1
   avatarSetup: 0
   additionalBone: 0
-  userData: '{"meshColors":[{"meshName":"model_block_one_23.5x30.000","color":{"r":0.8584905862808228,"g":0.06884123384952545,"b":0.2526501417160034,"a":1.0},"valid":true},{"meshName":"model_block_one_9x13.002","color":{"r":0.8584905862808228,"g":0.06884123384952545,"b":0.2526501417160034,"a":1.0},"valid":true},{"meshName":"model_block_one_2x9.140","color":{"r":1.0,"g":1.0,"b":1.0,"a":1.0},"valid":true}],"importMaterialColors":true}'
+  userData: '{"meshColors":[{"meshName":"model_block_one_23.5x30.000","color":{"r":0.8584905862808228,"g":0.06884123384952545,"b":0.2526501417160034,"a":1.0},"valid":true},{"meshName":"model_block_one_9x13.002","color":{"r":0.8584905862808228,"g":0.06884123384952545,"b":0.2526501417160034,"a":1.0},"valid":true},{"meshName":"model_block_one_2x9.140","color":{"r":1.0,"g":1.0,"b":1.0,"a":1.0},"valid":true}],"importMaterialColors":false}'
   assetBundleName: 
   assetBundleVariant: 

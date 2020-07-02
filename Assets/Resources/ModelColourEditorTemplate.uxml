@@ -1,80 +1,92 @@
 <UXML xmlns="UnityEngine.UIElements" xmlns:ue="UnityEditor.UIElements" xmlns:ce="ModelColourEditor">
     <VisualElement class="root">
+        <VisualElement class="tab-container">
+            <Button name="tabEditorButton" text="Editor" class="tab-container__button button-left" />
+            <Button name="tabSettingsButton" text="Settings" class="tab-container__button button-right" />
+        </VisualElement>
         <ScrollView class="sections">
+            <VisualElement name="tabEditor">
+                <VisualElement class="section">
+                    <TextElement class="section-header" text="Selection" />
 
-            <VisualElement class="section">
-                <TextElement class="section-header" text="Selection" />
+                    <ue:ObjectField name="selectionMesh" label="Mesh" />
+                    <VisualElement name="selectionMeshesSelected" class="unity-base-field">
+                        <Label class="unity-base-field__label" text="Meshes" />
+                        <TextElement name="selectionMeshesSelectedCount" class="selection-label" text="# selected" />
+                    </VisualElement>
 
-                <ue:ObjectField name="selectionMesh" label="Mesh" />
-                <VisualElement name="selectionMeshesSelected" class="unity-base-field">
-                    <Label class="unity-base-field__label" text="Meshes" />
-                    <TextElement name="selectionMeshesSelectedCount" class="selection-label" text="# selected" />
-                </VisualElement>
+                    <ue:ObjectField name="selectionModel" label="Source Asset" />
+                    <VisualElement name="selectionModelsSelected" class="unity-base-field">
+                        <Label class="unity-base-field__label" text="Source Assets" />
+                        <TextElement name="selectionModelsSelectedCount" class="selection-label" text="# selected" />
+                    </VisualElement>
 
-                <ue:ObjectField name="selectionModel" label="Source Asset" />
-                <VisualElement name="selectionModelsSelected" class="unity-base-field">
-                    <Label class="unity-base-field__label" text="Source Assets" />
-                    <TextElement name="selectionModelsSelectedCount" class="selection-label" text="# selected" />
-                </VisualElement>
-
-                <VisualElement class="horizontal-group">
-                    <VisualElement>
-                        <VisualElement name="selectionSceneReference" class="unity-base-field">
-                            <Label class="unity-base-field__label" text="Scene references:" />
-                            <TextElement name="selectionSceneReferenceCount" class="selection-label" text="1" />
+                    <VisualElement class="horizontal-group">
+                        <VisualElement>
+                            <VisualElement name="selectionSceneReference" class="unity-base-field">
+                                <Label class="unity-base-field__label" text="Scene references:" />
+                                <TextElement name="selectionSceneReferenceCount" class="selection-label" text="1" />
+                            </VisualElement>
+                        </VisualElement>
+                        <VisualElement class="influences-container">
+                            <TextElement name="influencesModelVertexColours" class="influences-element" text="✗ Model Vertex Colours" />
+                            <TextElement name="influencesModelMaterialColours" class="influences-element" text="✗ Model Material Colours" />
+                            <TextElement name="influencesCustomOverrideColours" class="influences-element" text="✗ Custom Override Colours" />
                         </VisualElement>
                     </VisualElement>
-                    <VisualElement class="influences-container">
-                        <TextElement name="influencesModelVertexColours" class="influences-element" text="✗ Model Vertex Colours" />
-                        <TextElement name="influencesModelMaterialColours" class="influences-element" text="✗ Model Material Colours" />
-                        <TextElement name="influencesCustomOverrideColours" class="influences-element" text="✗ Custom Override Colours" />
+                </VisualElement>
+
+                <VisualElement class="section">
+                    <TextElement class="section-header" text="Preview" />
+                    <VisualElement class="horizontal-group">
+                        <ce:ModelColourEditorPreviewElement name="previewColor" />
+                        <IMGUIContainer name="previewModel" />
                     </VisualElement>
                 </VisualElement>
-            </VisualElement>
 
-            <VisualElement class="section">
-                <TextElement class="section-header" text="Preview" />
-                <VisualElement class="horizontal-group">
-                    <ce:ModelColourEditorPreviewElement name="previewColor" />
-                    <IMGUIContainer name="previewModel" />
-                </VisualElement>
-            </VisualElement>
-
-            <VisualElement class="section">
-                <TextElement class="section-header" text="Override Colour" />
-                <VisualElement class="horizontal-group">
-                    <VisualElement>
-                        <ue:ColorField name="setColourColourPicker" show-alpha="false" />
-                        <Toggle name="setColourRandomAlpha" label="Random Alpha" tooltip="Turn this on for random rotation in wood grain shader" />
-                    </VisualElement>
-                    <VisualElement>
-                        <Button name="setColourButton" text="Set Colour" />
-                        <Button name="removeColourButton" text="Remove Colour" />
+                <VisualElement class="section">
+                    <TextElement class="section-header" text="Override Colour" />
+                    <VisualElement class="horizontal-group">
+                        <VisualElement>
+                            <ue:ColorField name="setColourColourPicker" show-alpha="false" />
+                            <Toggle name="setColourRandomAlpha" label="Random Alpha" tooltip="Turn this on for random rotation in wood grain shader" />
+                        </VisualElement>
+                        <VisualElement>
+                            <Button name="setColourButton" text="Set Colour" />
+                            <Button name="removeColourButton" text="Remove Colour" />
+                        </VisualElement>
                     </VisualElement>
                 </VisualElement>
-            </VisualElement>
 
-            <VisualElement class="section">
-                <TextElement class="section-header" text="Import Material Colours" />
-                <ScrollView name="importMaterialColoursGroup" class="import-materials-container">
-                    <!-- Import Material Groups go here -->
-                </ScrollView>
-                <VisualElement name="allMaterialColoursGroup" class="horizontal-group import-material-colors-group">
-                    <Label />
-                    <Button name="enableAllMaterialColoursButton" text="Enable All" />
-                    <Button name="disableAllMaterialColoursButton" text="Disable All" />
+                <VisualElement class="section">
+                    <TextElement class="section-header" text="Import Material Colours" />
+                    <ScrollView name="importMaterialColoursGroup" class="import-materials-container">
+                        <!-- Import Material Groups go here -->
+                    </ScrollView>
+                    <VisualElement name="allMaterialColoursGroup" class="horizontal-group import-material-colors-group">
+                        <Label />
+                        <Button name="enableAllMaterialColoursButton" text="Enable All" />
+                        <Button name="disableAllMaterialColoursButton" text="Disable All" />
+                    </VisualElement>
+                </VisualElement>
+
+                <VisualElement class="section">
+                    <TextElement class="section-header" text="Colour Picker Tools" />
+                    <VisualElement class="colour-picker-asset-container">
+                        <Foldout name="colourPickerAssetFoldout" class="unity-tree-view__item-toggle colour-picker-asset-container__foldout" />
+                        <ue:ObjectField name="colourPickerAsset" label="Colour Picker Asset" />
+                        <Button name="newColourPickerButton" class="new-button">
+                            <TextElement class="new-button__plus" text="+" />
+                            <VisualElement class="new-button__arrow" />
+                        </Button>
+                    </VisualElement>
+                    <IMGUIContainer name="colourPickerInlineScriptableObject" />
+                    <Button name="colourPickerSetColourButton" text="Set Colours" />
                 </VisualElement>
             </VisualElement>
-
-            <VisualElement class="section">
-                <TextElement class="section-header" text="Colour Picker Tools" />
-                <VisualElement class="colour-picker-asset-container">
-                    <ue:ObjectField name="colourPickerAsset" label="Colour Picker Asset" />
-                    <Button name="newColourPickerButton" class="new-button" text="+" />
-                </VisualElement>
-                <Button name="colourPickerSetColourButton" text="Set Colours" />
+            <VisualElement name="tabSettings">
+                <ce:ModelColourEditorSettingsElement />
             </VisualElement>
-
         </ScrollView>
 
         <VisualElement class="footer">

@@ -52,8 +52,10 @@ namespace ModelColourEditor
         private VisualElement _allMaterialColoursGroup;
         private Button _enableAllMaterialColoursButton;
         private Button _disableAllMaterialColoursButton;
+        private IMGUIContainer _colourPickerInlineScriptableObject;
         private Button _reimportedSelectedButton;
         private ObjectField _colourPickerAsset;
+        private Foldout _colourPickerAssetFoldout;
         private Button _colourPickerSetColourButton;
         private Button _colourPickerNewButton;
         private EditorCoroutine _coroutine;
@@ -61,6 +63,12 @@ namespace ModelColourEditor
         private float _stopwatchThreshold;
         private Queue<System.Action> _taskQueue = new Queue<System.Action>();
         private List<MeshFilter> _meshFilters;
+        private Button _tabEditorButton;
+        private Button _tabSettingsButton;
+        private int _tabIndex;
+        private VisualElement _tabEditor;
+        private VisualElement _tabSettings;
+        private Editor _colourPickerInlineScriptableObjectEditor;
 
         public static void OpenWindow()
         {
@@ -80,7 +88,9 @@ namespace ModelColourEditor
             var settings = JsonUtility.FromJson<EditorSettings>(EditorPrefs.GetString("ModelColourEditorSettings"));
             _colourPicker.value = settings.selectedColor;
             _randomAlpha.value = settings.randomAlpha;
-            _colourPickerAsset.value = settings.colourPickerTool;
+            _colourPickerAsset.value = AssetDatabase.LoadAssetAtPath<AbstractColourPickerTool>(AssetDatabase.GUIDToAssetPath(settings.colourPickerTool));
+
+            OnColourPickerChanged(_colourPickerAsset.value);
         }
 
         private void OnDisable()
@@ -91,7 +101,7 @@ namespace ModelColourEditor
             {
                 selectedColor = _colourPicker.value,
                 randomAlpha = _randomAlpha.value,
-                colourPickerTool = _colourPickerAsset.value as AbstractColourPickerTool
+                colourPickerTool = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(_colourPickerAsset.value))
             };
 
             EditorPrefs.SetString("ModelColourEditorSettings", JsonUtility.ToJson(settings));
@@ -106,6 +116,15 @@ namespace ModelColourEditor
             rootVisualElement.styleSheets.Add(styles);
 
             // Get references
+
+            _tabEditorButton = rootVisualElement.Q<Button>("tabEditorButton");
+            _tabEditorButton.clicked += OnTabEditorButtonClicked;
+            _tabSettingsButton = rootVisualElement.Q<Button>("tabSettingsButton");
+            _tabSettingsButton.clicked += OnTabSettingsButtonClicked;
+            _tabEditor = rootVisualElement.Q<VisualElement>("tabEditor");
+            _tabSettings = rootVisualElement.Q<VisualElement>("tabSettings");
+            UpdateTabs();
+
             _modelField = rootVisualElement.Q<ObjectField>("selectionModel");
             _modelField.objectType = typeof(GameObject);
             
@@ -144,16 +163,46 @@ namespace ModelColourEditor
 
             _colourPickerAsset = rootVisualElement.Q<ObjectField>("colourPickerAsset");
             _colourPickerAsset.objectType = typeof(AbstractColourPickerTool);
+            _colourPickerAsset.RegisterValueChangedCallback(evt => OnColourPickerChanged(evt.newValue));
+
+            _colourPickerAssetFoldout = rootVisualElement.Q<Foldout>("colourPickerAssetFoldout");
+            _colourPickerAssetFoldout.RegisterValueChangedCallback(OnColourPickerFoldoutChanged);
+            
             _colourPickerSetColourButton = rootVisualElement.Q<Button>("colourPickerSetColourButton");
             _colourPickerSetColourButton.clicked += SetColourPickerColours;
+            
             _colourPickerNewButton = rootVisualElement.Q<Button>("newColourPickerButton");
             BuildNewColourPickerMenu();
             _colourPickerNewButton.RegisterCallback<MouseDownEvent>(NewColourPicker);
+
+            _colourPickerInlineScriptableObject = rootVisualElement.Q<IMGUIContainer>("colourPickerInlineScriptableObject");
+            _colourPickerInlineScriptableObject.onGUIHandler = OnColourPickerInlineScriptableObjectInspectorGUI;
 
             _reimportedSelectedButton = rootVisualElement.Q<Button>("reimportedSelectedButton");
             _reimportedSelectedButton.clicked += ReimportSelected;
 
             OnSelectionChanged();
+        }
+
+        private void OnTabSettingsButtonClicked()
+        {
+            _tabIndex = 1;
+            UpdateTabs();
+        }
+
+        private void OnTabEditorButtonClicked()
+        {
+            _tabIndex = 0;
+            UpdateTabs();
+        }
+
+        private void UpdateTabs()
+        {
+            _tabEditorButton.EnableInClassList("active", _tabIndex == 0);
+            _tabSettingsButton.EnableInClassList("active", _tabIndex == 1);
+
+            _tabEditor.SetVisible(_tabIndex == 0);
+            _tabSettings.SetVisible(_tabIndex == 1);
         }
 
         private void OnDrawPreviewModelGUI()
@@ -532,6 +581,26 @@ namespace ModelColourEditor
             _colourPickerNewButton.clickable.activators.Clear();
         }
 
+        private void OnColourPickerChanged(UnityEngine.Object newValue)
+        {
+            Editor.CreateCachedEditor(newValue, null, ref _colourPickerInlineScriptableObjectEditor);
+
+            _colourPickerAssetFoldout.SetEnabled(newValue != null);
+            _colourPickerAssetFoldout.value = newValue != null;
+            _colourPickerInlineScriptableObject.SetVisible(newValue != null);
+        }
+
+        private void OnColourPickerInlineScriptableObjectInspectorGUI()
+        {
+            if (_colourPickerAsset.value == null || _colourPickerInlineScriptableObjectEditor == null) { return; }
+            _colourPickerInlineScriptableObjectEditor.OnInspectorGUI();
+        }
+
+        private void OnColourPickerFoldoutChanged(ChangeEvent<bool> evt)
+        {
+            _colourPickerInlineScriptableObject.SetVisible(evt.newValue);
+        }
+
         private void NewColourPicker(MouseDownEvent evt)
         {
             _colourPickerNewButton.panel.contextualMenuManager.DisplayMenu(evt, _colourPickerNewButton);
@@ -555,7 +624,7 @@ namespace ModelColourEditor
         {
             public Color selectedColor;
             public bool randomAlpha;
-            public AbstractColourPickerTool colourPickerTool;
+            public string colourPickerTool;
         }
     }
 }

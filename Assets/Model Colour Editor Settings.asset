@@ -12,6 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 047af78fc5348d147b18091f19d1de0e, type: 3}
   m_Name: Model Colour Editor Settings
   m_EditorClassIdentifier: 
-  defaultMaterial: {fileID: 0}
+  defaultMaterial: {fileID: 2100000, guid: 9685455bdf419c54c8aa537bb918d09c, type: 2}
   importMaterialColoursByDefault: 0
-  array: []
