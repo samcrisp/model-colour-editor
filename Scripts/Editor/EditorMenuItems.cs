@@ -9,7 +9,7 @@ namespace ModelColourEditor
     {
         private const string TOP = "Window/";
 
-        [MenuItem(TOP + "Open Model Colour Editor", false, 50)]
+        [MenuItem(TOP + "Model Colour Editor", false, 50)]
         public static void OpenModelColourEditor()
         {
             ModelColourEditor.OpenWindow();

@@ -49,7 +49,6 @@
                     <VisualElement class="horizontal-group">
                         <VisualElement>
                             <ue:ColorField name="setColourColourPicker" show-alpha="false" />
-                            <Toggle name="setColourRandomAlpha" label="Random Alpha" tooltip="Turn this on for random rotation in wood grain shader" />
                         </VisualElement>
                         <VisualElement>
                             <Button name="setColourButton" text="Set Colour" />

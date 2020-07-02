@@ -114,6 +114,12 @@ ModelColourEditorPreviewElement
     height: 85px;
 }
 
+#previewModel
+{
+    flex-grow: 0; 
+    width: 100px;
+}
+
 .preview__hex Label
 {
     min-width: 30px;
@@ -195,7 +201,10 @@ ModelColourEditorPreviewElement.expanded #unity-content-container
 
 .colour-picker-asset-container__foldout
 {
-    margin: 2px, 0px, 0px, 0px;
+    margin-top: 2px;
+    margin-left: 0px;
+    margin-bottom: 0px;
+    margin-right: 0px;
 }
 
 .new-button
