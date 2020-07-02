@@ -45,7 +45,6 @@ namespace ModelColourEditor
         private bool _hasEditorVertexColour;
         private bool _hasMaterialImportColour;
         private Editor _editor;
-        private Toggle _randomAlpha;
         private Button _setColourButton;
         private Button _removeColourButton;
         private VisualElement _importMaterialColoursGroup;
@@ -87,7 +86,6 @@ namespace ModelColourEditor
 
             var settings = JsonUtility.FromJson<EditorSettings>(EditorPrefs.GetString("ModelColourEditorSettings"));
             _colourPicker.value = settings.selectedColor;
-            _randomAlpha.value = settings.randomAlpha;
             _colourPickerAsset.value = AssetDatabase.LoadAssetAtPath<AbstractColourPickerTool>(AssetDatabase.GUIDToAssetPath(settings.colourPickerTool));
 
             OnColourPickerChanged(_colourPickerAsset.value);
@@ -100,7 +98,6 @@ namespace ModelColourEditor
             var settings = new EditorSettings()
             {
                 selectedColor = _colourPicker.value,
-                randomAlpha = _randomAlpha.value,
                 colourPickerTool = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(_colourPickerAsset.value))
             };
 
@@ -147,7 +144,6 @@ namespace ModelColourEditor
             _previewModel.onGUIHandler = OnDrawPreviewModelGUI;
 
             _colourPicker = rootVisualElement.Q<ColorField>("setColourColourPicker");
-            _randomAlpha = rootVisualElement.Q<Toggle>("setColourRandomAlpha");
 
             _setColourButton = rootVisualElement.Q<Button>("setColourButton");
             _setColourButton.clicked += SetColour;
@@ -291,7 +287,7 @@ namespace ModelColourEditor
                 _modelDataDictionary.Add(model, data);
             }
 
-            _hasEditorVertexColour |= data?.HasMeshColours ?? false;
+            _hasEditorVertexColour |= data?.meshColors.Any(mc => mc.meshName == mesh.name) ?? false;
             _hasMaterialImportColour |= data?.importMaterialColors ?? false;
         }
 
@@ -412,10 +408,16 @@ namespace ModelColourEditor
             {
                 var element = new ModelColourEditorImportMaterialsElement(model);
                 _importMaterialColoursGroup.Add(element);
-                element.OnImportMaterialsChangedEvent += OnSelectionChanged;
+                element.OnImportMaterialsChangedEvent += OnImportMaterialsChanged;
             }
 
             _allMaterialColoursGroup.SetVisible(_selectedModels.Count > 1);
+        }
+
+        private void OnImportMaterialsChanged()
+        {
+            _modelDataDictionary.Clear();
+            OnSelectionChanged();
         }
 
         private void SetColour()
@@ -423,7 +425,7 @@ namespace ModelColourEditor
             ApplyChangeToMeshes("Would you like to set colours on all meshes?",
             (mesh, data) => {
                 data.meshColors.RemoveAll(md => md.meshName == mesh.name);
-                data.meshColors.Add(new CustomAssetData.MeshColor(mesh.name, _colourPicker.value.ToAlpha(_randomAlpha.value ? UnityEngine.Random.value : 1)));
+                data.meshColors.Add(new CustomAssetData.MeshColor(mesh.name, _colourPicker.value));
                 return data;
             });
         }
@@ -469,6 +471,8 @@ namespace ModelColourEditor
                 AssetDatabase.ImportAsset(path);
             }
 
+            _modelDataDictionary.Clear();
+
             OnSelectionChanged();
         }
 
@@ -491,6 +495,8 @@ namespace ModelColourEditor
                 CustomAssetData.Set(path, data);
                 AssetDatabase.ImportAsset(path);
             }
+
+            _modelDataDictionary.Clear();
 
             OnSelectionChanged();
         }
@@ -623,7 +629,6 @@ namespace ModelColourEditor
         private class EditorSettings
         {
             public Color selectedColor;
-            public bool randomAlpha;
             public string colourPickerTool;
         }
     }
