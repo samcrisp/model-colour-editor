@@ -17,7 +17,7 @@ namespace ModelColourEditor
         {
             _shouldProcess = false;
             CustomAssetData customAssetData = CustomAssetData.Get(assetImporter);
-            if (customAssetData == null) { return; }
+            if (customAssetData == null) { _shouldProcess = ModelColourEditorSettings.Instance.importMaterialColoursByDefault; return; }
             if (!customAssetData.importMaterialColors) { return; }
             _shouldProcess = true;
 

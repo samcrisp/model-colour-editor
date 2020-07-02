@@ -7,10 +7,47 @@
     bottom: 0;
 }
 
+.tab-container
+{
+    flex-direction: row;
+    justify-content: center;
+    padding-top: 5px;
+}
+
+.tab-container__button
+{
+    margin: 0px;
+    padding: 5px 5px;
+    font-size: 13px;
+}
+
+.tab-container__button.active
+{
+    background-color: #6F6F6F;
+    color: #F4F4F4;
+}
+
+.button-left
+{
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+    border-right-width: 0px;
+}
+
+.button-right
+{
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+}
+
+#tabSettings
+{
+    padding: 10px;
+}
+
 .sections
 {
     flex-grow: 1;
-    padding-top: 5px;
 }
 
 .section
@@ -156,11 +193,35 @@ ModelColourEditorPreviewElement.expanded #unity-content-container
     flex-shrink: 1;
 }
 
+.colour-picker-asset-container__foldout
+{
+    margin: 2px, 0px, 0px, 0px;
+}
+
 .new-button
 {
-    width: 18px;
-    font-size: 18px;
+    font-size: 22px;
     height: 18px;
+    flex-direction: row;
+    padding-left: 1px;
+    padding-right: 1px;
+}
+
+.new-button__plus
+{
+    margin-bottom: 2px;
+}
+
+.new-button__arrow
+{
+    height: 12px;
+    width: 12px;
+    background-image: resource('dropdown');
+}
+
+#colourPickerInlineScriptableObject
+{
+    margin: 5px;
 }
 
 .footer
