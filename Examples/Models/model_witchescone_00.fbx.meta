@@ -91,6 +91,6 @@ ModelImporter:
   humanoidOversampling: 1
   avatarSetup: 0
   additionalBone: 0
-  userData: '{"meshColors":[],"importMaterialColors":true}'
+  userData: '{"meshColors":[],"importMaterialColors":{"hasValue":false,"value":false}}'
   assetBundleName: 
   assetBundleVariant: 

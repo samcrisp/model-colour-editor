@@ -12,6 +12,7 @@ namespace ModelColourEditor
         private Label _label;
         private Button _enableButton;
         private Button _disableButton;
+        private Button _resetButton;
         private GameObject _asset;
 
         public System.Action OnImportMaterialsChangedEvent;
@@ -34,17 +35,22 @@ namespace ModelColourEditor
 
             _enableButton = this.Q<Button>("enableMaterialColoursButton");
             _disableButton = this.Q<Button>("disableMaterialColoursButton");
+            _resetButton = this.Q<Button>("resetMaterialColoursButton");
 
             _enableButton.clicked += () => SetImportMaterialsEnabled(true);
-            _disableButton.clicked +=  () => SetImportMaterialsEnabled(false);
+            _disableButton.clicked += () => SetImportMaterialsEnabled(false);
+            _resetButton.clicked += () => SetImportMaterialsEnabled(null);
 
             string path = AssetDatabase.GetAssetPath(_asset);
-            bool isEnabled = CustomAssetData.Get(_asset)?.importMaterialColors ?? false;
+            var data = CustomAssetData.Get(_asset);
+            bool isEnabled = data?.ShouldImportMaterialColors ?? ModelColourEditorSettings.Instance.importMaterialColoursByDefault;
+            bool hasValue = data?.importMaterialColors.hasValue ?? false;
             _enableButton.SetEnabled(!isEnabled);
             _disableButton.SetEnabled(isEnabled);
+            _resetButton.SetEnabled(hasValue);
         }
 
-        private void SetImportMaterialsEnabled(bool enabled)
+        private void SetImportMaterialsEnabled(bool? enabled)
         {
             string path = AssetDatabase.GetAssetPath(_asset);
             var importer = AssetImporter.GetAtPath(path);

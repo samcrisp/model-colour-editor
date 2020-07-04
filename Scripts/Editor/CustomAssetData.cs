@@ -11,9 +11,10 @@ namespace ModelColourEditor
     public class CustomAssetData
     {
         public List<MeshColor> meshColors = new List<MeshColor>();
-        public bool importMaterialColors = false;
+        public NullableBool importMaterialColors;
 
         public bool HasMeshColours => meshColors.Count > 0;
+        public bool ShouldImportMaterialColors => importMaterialColors.hasValue ? importMaterialColors.value : ModelColourEditorSettings.Instance.importMaterialColoursByDefault;
 
         [System.Serializable]
         public struct MeshColor
@@ -63,5 +64,21 @@ namespace ModelColourEditor
             return JsonUtility.FromJson<CustomAssetData>(importer.userData);
         }
         #endif
+    }
+
+    [System.Serializable]
+    public struct NullableBool
+    {
+        public bool hasValue;
+        public bool value;
+
+        public static implicit operator NullableBool(bool? value)
+        {
+            return new NullableBool()
+            {
+                hasValue = value.HasValue,
+                value = value.HasValue ? value.Value : default
+            };
+        }
     }
 }

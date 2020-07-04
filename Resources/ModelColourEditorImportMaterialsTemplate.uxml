@@ -3,5 +3,6 @@
         <Label name="importMaterialColoursName" text="Model" />
         <Button name="enableMaterialColoursButton" text="Enable" />
         <Button name="disableMaterialColoursButton" text="Disable" />
+        <Button name="resetMaterialColoursButton" class="import-material-colors-group__reset" text="↻" tooltip="Reset to Default" />
     </VisualElement>
 </UXML>

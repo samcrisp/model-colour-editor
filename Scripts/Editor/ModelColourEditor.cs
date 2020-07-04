@@ -49,8 +49,6 @@ namespace ModelColourEditor
         private Button _removeColourButton;
         private VisualElement _importMaterialColoursGroup;
         private VisualElement _allMaterialColoursGroup;
-        private Button _enableAllMaterialColoursButton;
-        private Button _disableAllMaterialColoursButton;
         private IMGUIContainer _colourPickerInlineScriptableObject;
         private Button _reimportedSelectedButton;
         private ObjectField _colourPickerAsset;
@@ -152,10 +150,12 @@ namespace ModelColourEditor
 
             _importMaterialColoursGroup = rootVisualElement.Q<VisualElement>("importMaterialColoursGroup");
             _allMaterialColoursGroup = rootVisualElement.Q<VisualElement>("allMaterialColoursGroup");
-            _enableAllMaterialColoursButton = rootVisualElement.Q<Button>("enableAllMaterialColoursButton");
-            _disableAllMaterialColoursButton = rootVisualElement.Q<Button>("disableAllMaterialColoursButton");
-            _enableAllMaterialColoursButton.clicked += EnableMaterialColours;
-            _disableAllMaterialColoursButton.clicked += DisableMaterialColours;
+            var enableAllMaterialColoursButton = rootVisualElement.Q<Button>("enableAllMaterialColoursButton");
+            var disableAllMaterialColoursButton = rootVisualElement.Q<Button>("disableAllMaterialColoursButton");
+            var resetAllMaterialColoursButton = rootVisualElement.Q<Button>("resetAllMaterialColoursButton");
+            enableAllMaterialColoursButton.clicked += EnableMaterialColours;
+            disableAllMaterialColoursButton.clicked += DisableMaterialColours;
+            resetAllMaterialColoursButton.clicked += ResetMaterialColours;
 
             _colourPickerAsset = rootVisualElement.Q<ObjectField>("colourPickerAsset");
             _colourPickerAsset.objectType = typeof(AbstractColourPickerTool);
@@ -288,7 +288,7 @@ namespace ModelColourEditor
             }
 
             _hasEditorVertexColour |= data?.meshColors.Any(mc => mc.meshName == mesh.name) ?? false;
-            _hasMaterialImportColour |= data?.importMaterialColors ?? false;
+            _hasMaterialImportColour |= data?.ShouldImportMaterialColors ?? false;
         }
 
         private IEnumerator RunQueue(System.Action callback = null)
@@ -529,6 +529,17 @@ namespace ModelColourEditor
             (mesh, data) =>
             {
                 data.importMaterialColors = true;
+                return data;
+            }
+            );
+        }
+
+        private void ResetMaterialColours()
+        {
+            ApplyChangeToModels("Would you like to reset Import Material Colours on all assets?", 
+            (mesh, data) =>
+            {
+                data.importMaterialColors = null;
                 return data;
             }
             );
