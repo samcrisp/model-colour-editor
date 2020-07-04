@@ -66,6 +66,7 @@
                         <Label />
                         <Button name="enableAllMaterialColoursButton" text="Enable All" />
                         <Button name="disableAllMaterialColoursButton" text="Disable All" />
+                        <Button name="resetAllMaterialColoursButton" text="Reset All" />
                     </VisualElement>
                 </VisualElement>
 

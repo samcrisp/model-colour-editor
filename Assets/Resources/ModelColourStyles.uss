@@ -187,6 +187,11 @@ ModelColourEditorPreviewElement.expanded #unity-content-container
     width: 150px;
 }
 
+.import-material-colors-group__reset
+{
+    flex-shrink: 1;
+}
+
 .colour-picker-asset-container
 {
     display: flex;
