@@ -11,6 +11,7 @@
 /[Mm]emoryCaptures/
 /[Sc]reenshots/
 Screenshots/
+Uncommitted/
 
 # Never ignore Asset meta data
 !/[Aa]ssets/**/*.meta
