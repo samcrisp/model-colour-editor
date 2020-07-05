@@ -11,7 +11,6 @@
 /[Mm]emoryCaptures/
 /[Sc]reenshots/
 Screenshots/
-Uncommitted/
 
 # Never ignore Asset meta data
 !/[Aa]ssets/**/*.meta
@@ -68,3 +67,5 @@ crashlytics-build.properties
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# Test files
+Uncommitted/
