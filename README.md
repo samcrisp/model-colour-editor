@@ -8,7 +8,7 @@
 Install via one of the following options:
 - [Download the latest package](https://github.com/samcrisp/model-colour-editor/releases/latest)
 - Add the following Git URL to the Unity package manager:
-```https://github.com/samcrisp/model-colour-editor.git#release/stable```
+```https://github.com/samcrisp/model-colour-editor.git#release```
 
 ## Acknowledgements
 This plugin is supported by the Victorian Government through Creative Victoria.
