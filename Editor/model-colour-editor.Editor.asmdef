@@ -1,6 +1,8 @@
 {
     "name": "model-colour-editor.Editor",
-    "references": [],
+    "references": [
+        "Unity.EditorCoroutines.Editor"
+    ],
     "includePlatforms": [
         "Editor"
     ],
