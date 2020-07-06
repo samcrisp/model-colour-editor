@@ -42,7 +42,12 @@ namespace ModelColourEditor
                     _instance = asset;
                 }
 
-                HasAsset = _instance != null;
+                HasAsset = _instance != null && PrefabUtility.IsPartOfPrefabAsset(_instance);
+                
+                if (_instance == null)
+                {
+                    _instance = ScriptableObject.CreateInstance<ModelColourEditorSettings>();
+                }
 
                 return _instance;
             }
@@ -194,19 +199,7 @@ namespace ModelColourEditor
 
         private void CreateCachedEditor()
         {
-            ModelColourEditorSettings settings = ModelColourEditorSettings.Instance;
-
-            if (settings == null)
-            {
-                settings = ScriptableObject.CreateInstance<ModelColourEditorSettings>();
-            }
-
-            Editor.CreateCachedEditor(settings, typeof(ModelColourEditorSettingsInspector), ref _settingsEditor);
-
-            // if (_imguiContainer != null)
-            // {
-            //     _imguiContainer.onGUIHandler = _settingsEditor.OnInspectorGUI;
-            // }
+            Editor.CreateCachedEditor(ModelColourEditorSettings.Instance, typeof(ModelColourEditorSettingsInspector), ref _settingsEditor);
         }
 
         private void OnSettingsChanged(ChangeEvent<UnityEngine.Object> evt)
