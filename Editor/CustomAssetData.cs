@@ -19,16 +19,21 @@ namespace ModelColourEditor
         [System.Serializable]
         public struct MeshColor
         {
-            public MeshColor(string meshName, Color color)
+            public MeshColor(Mesh mesh, Color color, int materialIndex)
             {
-                this.meshName = meshName;
+                this.meshName = mesh.name;
                 this.color = color;
-                this.valid = true;
+                this.materialIndex = materialIndex;
+
+                this.mesh = mesh;
             }
             
             public string meshName;
             public Color color;
-            public bool valid;
+            public int materialIndex;
+
+            [System.NonSerialized]
+            public Mesh mesh;
         }
 
         #if UNITY_EDITOR

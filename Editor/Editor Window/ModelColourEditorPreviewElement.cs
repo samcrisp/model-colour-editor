@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -10,10 +12,17 @@ namespace ModelColourEditor
     {
         private VisualElement _container;
         private TextElement _noColoursSet;
-        private TextField _hexField;
-        private int _selectedIndex;
-        private List<Color> _allColors;
+        private Button _selectAll;
+        private HashSet<int> _selectedIndices = new HashSet<int>();
+        private int _minSelectionIndex;
+        private int _maxSelectionIndex;
+        private bool _previousSelectionMax;
+        private List<CustomAssetData.MeshColor> _allColors;
         private TextElement _remainingElement;
+
+        public HashSet<int> SelectedIndices => _selectedIndices;
+        
+        public Action<Color> SetOverrideColorEvent;
 
         public ModelColourEditorPreviewElement()
         {
@@ -28,10 +37,12 @@ namespace ModelColourEditor
 
             _container = this.Q<VisualElement>("previewElementContainer");
             _noColoursSet = this.Q<TextElement>("previewNoColoursSet");
-            _hexField = this.Q<TextField>("previewHexField");
+            
+            _selectAll = this.Q<Button>("previewSelectAllButton");
+            _selectAll.clicked += () => SetSelected(-1);
         }
 
-        public void SetColors(List<Color> colors)
+        public void SetColors(List<CustomAssetData.MeshColor> colors)
         {
             this.EnableInClassList("expanded", true);
             _allColors = colors;
@@ -39,12 +50,8 @@ namespace ModelColourEditor
             
             for (int i = 0; i < colors.Count; i++)
             {
-                Color color = colors[i];
-                VisualElement colorElement = new VisualElement();
-                colorElement.AddToClassList("preview__color-element");
-                colorElement.style.backgroundColor = color.gamma.ToAlpha(1);
-                colorElement.RegisterCallback<MouseDownEvent, int>((e, index) => SetSelected(index), i);
-                _container.Add(colorElement);
+                Color color = colors[i].color;
+                CreateColourElement(color, i);
 
                 if (i == 9 && colors.Count > 10)
                 {
@@ -62,7 +69,7 @@ namespace ModelColourEditor
                 child.SetVisible(child == _noColoursSet ^ _container.childCount > 0);
             }
 
-            SetSelected(0);
+            SetSelected(-1);
         }
 
         private void OnClickRemainingColors(MouseDownEvent evt)
@@ -72,28 +79,128 @@ namespace ModelColourEditor
 
             for (int i = 10; i < _allColors.Count; i++)
             {
-                Color color = _allColors[i];
-                VisualElement colorElement = new VisualElement();
-                colorElement.AddToClassList("preview__color-element");
-                colorElement.style.backgroundColor = color.gamma.ToAlpha(1);
-                colorElement.RegisterCallback<MouseDownEvent, int>((e, index) => SetSelected(index), i);
-                _container.Add(colorElement);
+                Color color = _allColors[i].color;
+                var element = CreateColourElement(color, i);
+
+                bool enable = _selectedIndices.Contains(i);
+                element.EnableInClassList("selected", enable);
             }
         }
 
-        private void SetSelected(int index)
+        private void SetSelected(int index, MouseDownEvent evt = null)
         {
-            _selectedIndex = index;
+            if (evt == null) { evt = new MouseDownEvent(); }
 
+            if (evt.button != 0) { return; }
+
+            if (index == -1)
+            {
+                int count = _allColors.Count;
+
+                _selectedIndices.Clear();
+                _selectedIndices.UnionWith(Enumerable.Range(0, count));
+
+                _minSelectionIndex = 0;
+                _maxSelectionIndex = _allColors.Count;
+
+                _previousSelectionMax = true;
+            }
+            else if (evt.shiftKey)
+            {
+                if (_selectedIndices.Count == 0)
+                {
+                    _selectedIndices.Add(index);
+                    _maxSelectionIndex = _minSelectionIndex = index;
+                }
+                else
+                {
+                    bool expandingSelection = index > _maxSelectionIndex || index < _minSelectionIndex;
+
+                    if (index < _minSelectionIndex) { _minSelectionIndex = index; _previousSelectionMax = false; }
+                    else if (index > _maxSelectionIndex) { _maxSelectionIndex = index; _previousSelectionMax = true; }
+
+                    if (expandingSelection)
+                    {
+                        _selectedIndices.UnionWith(Enumerable.Range(_minSelectionIndex, _maxSelectionIndex - _minSelectionIndex + 1));
+                    }
+                    else
+                    {
+                        int min = _previousSelectionMax ? _minSelectionIndex : index;
+                        int max = _previousSelectionMax ? index : _maxSelectionIndex;
+                        
+                        _selectedIndices.Clear();
+                        _selectedIndices.UnionWith(Enumerable.Range(min, max - min + 1));
+
+                        _minSelectionIndex = _previousSelectionMax ? _minSelectionIndex : index;
+                        _maxSelectionIndex = _previousSelectionMax ? index : _maxSelectionIndex;
+                    }
+                }
+
+            }
+            else if (evt.ctrlKey)
+            {
+                if (_selectedIndices.Count == 0)
+                {
+                    _selectedIndices.Add(index);
+                    _maxSelectionIndex = _minSelectionIndex = index;
+                }
+                else
+                {
+                    if (index < _minSelectionIndex) { _minSelectionIndex = index; _previousSelectionMax = false; }
+                    if (index > _maxSelectionIndex) { _maxSelectionIndex = index; _previousSelectionMax = true; }
+
+                    if (_selectedIndices.Contains(index))
+                    {
+                        _selectedIndices.Remove(index);
+                    }
+                    else
+                    {
+                        _selectedIndices.Add(index);
+                    }
+                }
+            }
+            else
+            {
+                _selectedIndices.Clear();
+                _selectedIndices.Add(index);
+                _minSelectionIndex = _maxSelectionIndex = index;
+            }
+
+            bool selectAll = true;
             for (int i = 0; i < _container.childCount; i++)
             {
-                _container[i].EnableInClassList("selected", index == i);
+                bool enable = _selectedIndices.Contains(i);
+                _container[i].EnableInClassList("selected", enable);
+
+                selectAll &= enable;
             }
 
-            if (index >= 0 && index < _container.childCount)
+            _selectAll.SetEnabled(!selectAll);
+        }
+
+        private VisualElement CreateColourElement(Color color, int i)
+        {
+            VisualElement colorElement = new VisualElement();
+            colorElement.AddToClassList("preview__color-element");
+            colorElement.style.backgroundColor = color.gamma.ToAlpha(1);
+            colorElement.RegisterCallback<MouseDownEvent, int>((e, index) => SetSelected(index, e), i);
+            
+            colorElement.AddManipulator(new ContextualMenuManipulator(e =>
             {
-                _hexField.value = ColorUtility.ToHtmlStringRGB(_container[index].style.backgroundColor.value);
-            }
+                e.menu.AppendAction("Copy", action => 
+                {
+                    EditorGUIUtility.systemCopyBuffer = "#" + ColorUtility.ToHtmlStringRGB(color.gamma);
+                });
+
+                e.menu.AppendAction("Pick", action => 
+                {
+                    SetOverrideColorEvent?.Invoke(color.gamma);
+                });
+            }));
+            
+            _container.Add(colorElement);
+
+            return colorElement;
         }
 
         public new class UxmlFactory : UxmlFactory<ModelColourEditorPreviewElement> {}
