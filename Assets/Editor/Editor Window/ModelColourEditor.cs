@@ -17,12 +17,12 @@ namespace ModelColourEditor
     {
         public const float MAX_MILLISECONDS_PER_FRAME = 33;
 
-        private delegate CustomAssetData MeshDataAction(Mesh mesh, CustomAssetData data);
+        private delegate CustomAssetData MeshDataAction(Mesh mesh, int materialIndex, CustomAssetData data);
         private delegate CustomAssetData ModelDataAction(GameObject asset, CustomAssetData data);
 
         private List<Mesh> _selectedMeshes = new List<Mesh>();
         private List<GameObject> _selectedModels = new List<GameObject>();
-        private List<Color> _previewColours = new List<Color>();
+        private List<CustomAssetData.MeshColor> _previewColours = new List<CustomAssetData.MeshColor>();
         private Dictionary<Mesh, GameObject> _meshModelDictionary = new Dictionary<Mesh, GameObject>();
         private Dictionary<GameObject, CustomAssetData> _modelDataDictionary = new Dictionary<GameObject, CustomAssetData>();
 
@@ -138,6 +138,8 @@ namespace ModelColourEditor
             _influencesCustomOverrideColours = rootVisualElement.Q<TextElement>("influencesCustomOverrideColours");
 
             _previewColorElement = rootVisualElement.Q<ModelColourEditorPreviewElement>("previewColor");
+            _previewColorElement.SetOverrideColorEvent += color => _colourPicker.value = color;
+
             _previewModel = rootVisualElement.Q<IMGUIContainer>("previewModel");
             _previewModel.onGUIHandler = OnDrawPreviewModelGUI;
 
@@ -229,12 +231,7 @@ namespace ModelColourEditor
                 if (selection is Mesh)
                 {
                     Mesh mesh = selection as Mesh;
-                    GameObject model = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GetAssetPath(mesh));
-
-                    _selectedMeshes.Add(mesh);
-                    _selectedModels.Add(model);
-                    _meshModelDictionary[mesh] = model;
-                    if (mesh.colors != null) { _previewColours.AddRange(mesh.colors.Distinct().Where(c => !_previewColours.Contains(c))); }
+                    _taskQueue.Enqueue(() => GetMeshColorsCoroutine(mesh));
                 }
                 else if (selection is GameObject)
                 {
@@ -330,12 +327,13 @@ namespace ModelColourEditor
             _selectedMeshes.Add(mesh);
             _meshModelDictionary[mesh] = model;
 
-            HashSet<Color> colors = new HashSet<Color>();
-            foreach(var color in mesh.colors)
+            if (mesh.colors != null && mesh.colors.Length > 0) 
             {
-                if (colors.Contains(color)) { continue; }
-                colors.Add(color);
-                _previewColours.Add(color);
+                for (int i = 0; i < mesh.subMeshCount; i++)
+                {
+                    var submesh = mesh.GetSubMesh(i);
+                    _previewColours.Add(new CustomAssetData.MeshColor(mesh, mesh.colors[submesh.firstVertex], i));
+                }
             }
 
             if (!_selectedModels.Contains(model)) { _selectedModels.Add(model); }
@@ -423,9 +421,9 @@ namespace ModelColourEditor
         private void SetColour()
         {
             ApplyChangeToMeshes("Would you like to set colours on all meshes?",
-            (mesh, data) => {
-                data.meshColors.RemoveAll(md => md.meshName == mesh.name);
-                data.meshColors.Add(new CustomAssetData.MeshColor(mesh.name, _colourPicker.value));
+            (mesh, index, data) => {
+                data.meshColors.RemoveAll(md => md.meshName == mesh.name && md.materialIndex == index);
+                data.meshColors.Add(new CustomAssetData.MeshColor(mesh, _colourPicker.value, index));
                 return data;
             });
         }
@@ -433,8 +431,8 @@ namespace ModelColourEditor
         private void RemoveColour()
         {
             ApplyChangeToMeshes("Would you like to remove colours on all meshes?",
-            (mesh, data) => {
-                data.meshColors.RemoveAll(md => md.meshName == mesh.name);
+            (mesh, index, data) => {
+                data.meshColors.RemoveAll(md => md.meshName == mesh.name && md.materialIndex == index);
                 return data;
             });
         }
@@ -442,9 +440,9 @@ namespace ModelColourEditor
         private void ApplyChangeToMeshes(string multipleWarning, MeshDataAction action)
         {
             // Dialogue popup warning
-            if (_selectedMeshes.Count > 1)
+            if (_previewColorElement.SelectedIndices.Count > 1)
             {
-                if (!EditorUtility.DisplayDialog("Multiple mesh confirmation", $"You have {_selectedMeshes.Count} meshes selected. {multipleWarning}", "Yes", "No"))
+                if (!EditorUtility.DisplayDialog("Multiple mesh confirmation", $"You have {_previewColorElement.SelectedIndices.Count} submeshes selected. {multipleWarning}", "Yes", "No"))
                 {
                     return;
                 }
@@ -452,16 +450,18 @@ namespace ModelColourEditor
 
             var modelData = new Dictionary<GameObject, CustomAssetData>();
 
-            foreach(var mesh in _selectedMeshes)
+            foreach(var meshColor in _previewColorElement.SelectedIndices.Select(i => _previewColours[i]))
             {
-                var asset = _meshModelDictionary[mesh];
+                var mesh = meshColor.mesh;
+                var index = meshColor.materialIndex;
+                var asset = _meshModelDictionary[meshColor.mesh];
                 if (!modelData.ContainsKey(asset))
                 {
                     CustomAssetData data = CustomAssetData.Get(asset) ?? new CustomAssetData();
                     modelData.Add(asset, data);
                 }
 
-                modelData[asset] = action(mesh, modelData[asset]);
+                modelData[asset] = action(mesh, index, modelData[asset]);
             }
 
             foreach(var data in modelData)
@@ -548,11 +548,11 @@ namespace ModelColourEditor
         private void SetColourPickerColours()
         {
             ApplyChangeToMeshes("Would you like to set colours on all meshes?",
-            (mesh, data) => {
+            (mesh, index, data) => {
                 Color? color = (_colourPickerAsset.value as AbstractColourPickerTool).GetColor(mesh);
                 if (!color.HasValue) { return data; }
-                data.meshColors.RemoveAll(md => md.meshName == mesh.name);
-                data.meshColors.Add(new CustomAssetData.MeshColor(mesh.name, color.Value));
+                data.meshColors.RemoveAll(md => md.meshName == mesh.name && md.materialIndex == index);
+                data.meshColors.Add(new CustomAssetData.MeshColor(mesh, color.Value, index));
                 return data;
             });
         }

@@ -16,24 +16,46 @@ namespace ModelColourEditor
             if (customAssetData == null) { return; }
             if (!customAssetData.HasMeshColours) { return; }
 
-            var meshColors = customAssetData.meshColors;
+            var meshColorData = customAssetData.meshColors;
+            var meshDictionary = meshColorData.GroupBy(mc => mc.meshName).ToDictionary(mc => mc.Key);
 
             MeshFilter[] meshFilters = root.GetComponentsInChildren<MeshFilter>();
             
             foreach(var meshFilter in meshFilters)
             {
-                var meshColor = customAssetData.meshColors.FirstOrDefault(m => m.meshName == meshFilter.sharedMesh.name);
-                
-                if (meshColor.valid)
+                Mesh sharedMesh = meshFilter.sharedMesh;
+
+                if (meshDictionary.TryGetValue(sharedMesh.name, out var meshColors))
                 {
-                    meshFilter.sharedMesh.SetColors(Enumerable.Repeat(meshColor.color.linear, meshFilter.sharedMesh.vertexCount).ToList());
+                    var meshColorDictionary = meshColors.ToDictionary(mc => mc.materialIndex);
+                    Debug.Log(meshColors.Count());
+
+                    Color[] colors = new Color[sharedMesh.vertexCount];
+                    sharedMesh.colors.CopyTo(colors, 0);
+
+                    for (int i = 0; i < sharedMesh.subMeshCount; i++)
+                    {
+                        if (meshColorDictionary.TryGetValue(i, out var meshColor))
+                        {
+                            var subMesh = sharedMesh.GetSubMesh(i);
+                            Debug.Log($"{i} {subMesh.vertexCount} {sharedMesh.vertexCount}");
+                            System.Array.Copy(Enumerable.Repeat(meshColor.color.linear, subMesh.vertexCount).ToArray(), 0, colors, subMesh.firstVertex, subMesh.vertexCount);
+                        }
+                    }
+
+                    sharedMesh.SetColors(colors);
+
+                    Debug.Log(sharedMesh.colors[0]);
+
+                    // sharedMesh.SetColors(Enumerable.ToList<TResult>(Enumerable.Repeat(meshColor.color.linear, sharedMesh.vertexCount)));
 
                     if (ModelColourEditorSettings.Instance.defaultMaterial != null)
                     {
                         Renderer renderer = meshFilter.GetComponent<MeshRenderer>();
-                        renderer.sharedMaterials = Enumerable.Repeat(ModelColourEditorSettings.Instance.defaultMaterial, meshFilter.sharedMesh.subMeshCount).ToArray();
+                        renderer.sharedMaterials = Enumerable.Repeat(ModelColourEditorSettings.Instance.defaultMaterial, sharedMesh.subMeshCount).ToArray();
                     }
                 }
+                
             }
         }
     }

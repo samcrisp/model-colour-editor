@@ -15,13 +15,13 @@ namespace ModelColourEditor
 
         public void OnPreprocessModel()
         {
+            _colors = new Dictionary<Renderer, List<Color>>();
+
             _shouldProcess = false;
             CustomAssetData customAssetData = CustomAssetData.Get(assetImporter);
             if (customAssetData == null) { _shouldProcess = ModelColourEditorSettings.Instance.importMaterialColoursByDefault; return; }
             if (!customAssetData.ShouldImportMaterialColors) { return; }
             _shouldProcess = true;
-
-            _colors = new Dictionary<Renderer, List<Color>>();
         }
 
         public void OnAssignMaterialModel(Material material, Renderer renderer)
