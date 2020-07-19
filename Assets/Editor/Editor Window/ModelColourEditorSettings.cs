@@ -149,7 +149,7 @@ namespace ModelColourEditor
                 var packagePath = directoryInfo.FullName;
                 infoBoxContents.SetEnabled(false);
                 moveToPackagesFolderButton.text = "Moving...";
-                FileUtil.MoveFileOrDirectory(packagePath, "Packages/");
+                FileUtil.MoveFileOrDirectory(packagePath, $"Packages/{directoryInfo.Name}");
             };
             infoBoxContents.Add(moveToPackagesFolderButton);
             this.Add(infoBox);
