@@ -66,6 +66,12 @@ Button.active
     padding-left: 6px;
 }
 
+.dark-theme .section
+{
+    background-color: #3F3F3F;
+    border-color: #202020;
+}
+
 .section-header
 {
     -unity-font-style: bold;
@@ -73,11 +79,6 @@ Button.active
     padding-bottom: 2px;
     padding-right: 0px;
     padding-left: 0px;
-}
-
-.influences-container
-{
-
 }
 
 .influences-element
@@ -93,6 +94,11 @@ Button.active
 .influences-element.has-color
 {
     color: #000000;
+}
+
+.dark-theme .influences-element.has-color
+{
+    color: #B8B8B8;
 }
 
 .horizontal-group
@@ -164,6 +170,7 @@ ModelColourEditorPreviewElement.expanded #unity-content-container
     font-size: 11px;
     padding-left: 2px;
     padding-right: 2px;
+    color: #000000;
 }
 
 .preview__color-element:hover
@@ -242,6 +249,11 @@ ModelColourEditorPreviewElement.expanded #unity-content-container
     height: 12px;
     width: 12px;
     background-image: resource('dropdown');
+}
+
+.dark-theme .new-button__arrow
+{
+    background-image: resource('d_dropdown');
 }
 
 #colourPickerInlineScriptableObject

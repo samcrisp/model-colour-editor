@@ -70,3 +70,4 @@ crashlytics-build.properties
 # Test files
 Uncommitted/
 Assets/Uncommitted.meta
+.idea/

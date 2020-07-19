@@ -226,7 +226,7 @@ namespace ModelColourEditor
 
                 if (modifiers.arraySize == 0)
                 {
-                    var italics = new GUIStyle() { fontStyle = FontStyle.Italic };
+                    var italics = new GUIStyle(GUI.skin.label) { fontStyle = FontStyle.Italic, clipping = TextClipping.Overflow, alignment = TextAnchor.UpperLeft };
                     EditorGUILayout.LabelField("None", italics, GUILayout.Height(0));
                 }
 
@@ -381,7 +381,7 @@ namespace ModelColourEditor
             if (modifierCount == 0)
             {
                 var modifierRect = new Rect(modifiersRect.x, modifiersRect.y + 2, modifiersRect.width, LINE_HEIGHT);
-                var italics = new GUIStyle() { fontStyle = FontStyle.Italic };
+                var italics = new GUIStyle(GUI.skin.label) { fontStyle = FontStyle.Italic };
                 EditorGUI.LabelField(modifierRect, "None", italics);
             }
 
