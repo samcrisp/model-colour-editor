@@ -109,6 +109,8 @@ namespace ModelColourEditor
 
             template.CloneTree(rootVisualElement);
             rootVisualElement.styleSheets.Add(styles);
+            
+            if (EditorGUIUtility.isProSkin) { rootVisualElement.AddToClassList("dark-theme"); }
 
             // Get references
 
