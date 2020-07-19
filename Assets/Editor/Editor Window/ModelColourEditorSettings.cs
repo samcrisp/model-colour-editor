@@ -149,7 +149,16 @@ namespace ModelColourEditor
                 var packagePath = directoryInfo.FullName;
                 infoBoxContents.SetEnabled(false);
                 moveToPackagesFolderButton.text = "Moving...";
+                
                 FileUtil.MoveFileOrDirectory(packagePath, $"Packages/{directoryInfo.Name}");
+
+                var metaFile = packagePath + ".meta";
+                if (File.Exists(metaFile))
+                {
+                    FileUtil.MoveFileOrDirectory(metaFile, $"Packages/Model Colour Editor.meta");
+                }
+                
+                AssetDatabase.Refresh();
             };
             infoBoxContents.Add(moveToPackagesFolderButton);
             this.Add(infoBox);
