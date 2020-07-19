@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEditor.PackageManager;
+using UnityEditor.PackageManager.UI;
 
 namespace ModelColourEditor
 {
@@ -117,6 +120,41 @@ namespace ModelColourEditor
 
         public ModelColourEditorSettingsElement()
         {
+            #if !EDITOR_COROUTINES
+            var infoBox = CreateInfoBox("Editor Coroutines package is not installed.\n\nModel Colour Editor will still work but might cause the editor to pause when selecting objects.\n\nIf the package is installed in the Packages folder rather than the Assets folder this dependency should be resolved automatically.\n");
+            var infoBoxContents = infoBox.Q("contents");
+            var addPackageButton = new Button();
+            addPackageButton.text = "Install Editor Coroutines package";
+            addPackageButton.clicked += () =>
+            {
+                infoBoxContents.SetEnabled(false);
+                addPackageButton.text = "Installing...";
+                Client.Add("com.unity.editorcoroutines");
+            };
+            infoBoxContents.Add(addPackageButton);
+            var moveToPackagesFolderButton = new Button();
+            moveToPackagesFolderButton.text = "Move plugin to Packages folder";
+            moveToPackagesFolderButton.clicked += () =>
+            {
+                var settingsAssetPath = Directory
+                    .GetParent(AssetDatabase.GetAssetPath(
+                        MonoScript.FromScriptableObject(ModelColourEditorSettings.Instance)));
+                var directoryInfo = settingsAssetPath?.Parent?.Parent;
+                if (directoryInfo == null || directoryInfo.Name != "Model Colour Editor")
+                {
+                    Debug.LogWarning("Plugin folder has been modified. Cannot move to Packages folder. Try moving the plugin folder manually.");
+                    return;
+                }
+
+                var packagePath = directoryInfo.FullName;
+                infoBoxContents.SetEnabled(false);
+                moveToPackagesFolderButton.text = "Moving...";
+                FileUtil.MoveFileOrDirectory(packagePath, "Packages/");
+            };
+            infoBoxContents.Add(moveToPackagesFolderButton);
+            this.Add(infoBox);
+            #endif
+            
             TextElement label = new Label();
             label.text = "Model Colour Editor Settings";
             label.style.unityFontStyleAndWeight = FontStyle.Bold;
@@ -144,23 +182,8 @@ namespace ModelColourEditor
             _button.style.flexGrow = 1;
             container.Add(_button);
 
-            _warningBox = new VisualElement();
-            _warningBox.style.flexDirection = FlexDirection.Row;
-            _warningBox.style.alignItems = Align.Center;
-            _warningBox.style.marginBottom = _warningBox.style.marginRight = _warningBox.style.marginLeft = _warningBox.style.marginTop = 2;
-            _warningBox.style.paddingBottom = _warningBox.style.paddingRight = _warningBox.style.paddingLeft = _warningBox.style.paddingTop = 1;
-            _warningBox.style.borderBottomColor = _warningBox.style.borderRightColor = _warningBox.style.borderLeftColor = _warningBox.style.borderTopColor = new StyleColor(new Color32(169, 169, 169, 255));
-            _warningBox.style.backgroundColor = new StyleColor(new Color32(202, 202, 202, 255));
-            _warningBox.style.borderTopLeftRadius = _warningBox.style.borderTopRightRadius = _warningBox.style.borderBottomLeftRadius = _warningBox.style.borderBottomRightRadius = 3;
-            _warningBox.style.fontSize = 10;
-            _warningBox.AddToClassList("unity-box");
-            var warningBoxImage = new Image() { image = EditorGUIUtility.FindTexture("console.warnicon"), scaleMode = ScaleMode.ScaleToFit };
-            var warningBoxLabel = new Label("More than one ModelColourEditorSettings asset exists in the project. This is not recommended because the plugin will automatically select the first one it finds to use regardless of which asset is selected here.");
-            warningBoxLabel.style.whiteSpace = WhiteSpace.Normal;
-            warningBoxLabel.style.marginRight = 20;
-            warningBoxImage.style.flexShrink = 0;
-            _warningBox.Add(warningBoxImage);
-            _warningBox.Add(warningBoxLabel);
+            _warningBox = CreateInfoBox(
+                "More than one ModelColourEditorSettings asset exists in the project. This is not recommended because the plugin will automatically select the first one it finds to use regardless of which asset is selected here.");
             this.Add(_warningBox);
 
             UpdateSettingsField();
@@ -219,6 +242,32 @@ namespace ModelColourEditor
 
             UpdateSettingsField();
             CreateCachedEditor();
+        }
+
+        private VisualElement CreateInfoBox(string text)
+        {
+            var borderColor = EditorGUIUtility.isProSkin ? new Color32(35, 35, 35, 255) : new Color32(169, 169, 169, 255);
+            var backgroundColor = EditorGUIUtility.isProSkin ? new Color32(64, 64, 64, 255) : new Color32(202, 202, 202, 255);
+            
+            var infoBox = new VisualElement();
+            infoBox.style.flexDirection = FlexDirection.Row;
+            infoBox.style.alignItems = Align.Center;
+            infoBox.style.marginBottom = infoBox.style.marginRight = infoBox.style.marginLeft = infoBox.style.marginTop = 2;
+            infoBox.style.paddingBottom = infoBox.style.paddingRight = infoBox.style.paddingLeft = infoBox.style.paddingTop = 1;
+            infoBox.style.borderBottomColor = infoBox.style.borderRightColor = infoBox.style.borderLeftColor = infoBox.style.borderTopColor = new StyleColor(borderColor);
+            infoBox.style.backgroundColor = new StyleColor(backgroundColor);
+            infoBox.style.borderTopLeftRadius = infoBox.style.borderTopRightRadius = infoBox.style.borderBottomLeftRadius = infoBox.style.borderBottomRightRadius = 3;
+            infoBox.style.fontSize = 10;
+            infoBox.AddToClassList("unity-box");
+            var image = new Image() { image = EditorGUIUtility.FindTexture("console.warnicon"), scaleMode = ScaleMode.ScaleToFit };
+            var contents = new VisualElement {name = "contents"};
+            var label = new Label(text);
+            label.style.whiteSpace = WhiteSpace.Normal;
+            image.style.flexShrink = 0;
+            contents.Add(label);
+            infoBox.Add(image);
+            infoBox.Add(contents);
+            return infoBox;
         }
     }
 

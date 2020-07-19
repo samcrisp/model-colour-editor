@@ -9,7 +9,9 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+#if EDITOR_COROUTINES
 using Unity.EditorCoroutines.Editor;
+#endif
 
 namespace ModelColourEditor
 {
@@ -55,7 +57,6 @@ namespace ModelColourEditor
         private Foldout _colourPickerAssetFoldout;
         private Button _colourPickerSetColourButton;
         private Button _colourPickerNewButton;
-        private EditorCoroutine _coroutine;
         private System.Diagnostics.Stopwatch _stopwatch = new System.Diagnostics.Stopwatch();
         private float _stopwatchThreshold;
         private Queue<System.Action> _taskQueue = new Queue<System.Action>();
@@ -66,6 +67,9 @@ namespace ModelColourEditor
         private VisualElement _tabEditor;
         private VisualElement _tabSettings;
         private Editor _colourPickerInlineScriptableObjectEditor;
+        #if EDITOR_COROUTINES
+        private EditorCoroutine _coroutine;
+        #endif
 
         public static void OpenWindow()
         {
@@ -212,12 +216,23 @@ namespace ModelColourEditor
 
         private void OnSelectionChanged()
         {
+            #if EDITOR_COROUTINES
             if (_coroutine != null) { this.StopCoroutine(_coroutine); }
             _taskQueue.Clear();
 
             GetSelection();
 
             _coroutine = this.StartCoroutine(RunQueue());
+            #else
+            _taskQueue.Clear();
+            
+            GetSelection();
+            
+            while(_taskQueue.Count > 0)
+            {
+                _taskQueue.Dequeue()();
+            }
+            #endif
         }
 
         private void GetSelection()
