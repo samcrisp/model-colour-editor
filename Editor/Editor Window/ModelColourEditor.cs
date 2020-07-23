@@ -601,16 +601,15 @@ namespace ModelColourEditor
             _colourPickerNewButton.AddManipulator(new ContextualMenuManipulator(e => {
 
                 Type abstractType = typeof(AbstractColourPickerTool);
-                var assembly = Assembly.GetAssembly(abstractType);
-                var types = assembly.GetTypes().Where(t => t != abstractType && abstractType.IsAssignableFrom(t));
+                var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes()).Where(t => t != abstractType && abstractType.IsAssignableFrom(t));
 
                 foreach(var type in types)
                 {
-                    string name = ObjectNames.NicifyVariableName(Regex.Replace(type.Name, @"^ColourPickerTool", string.Empty));
+                    string colourPickerToolName = ObjectNames.NicifyVariableName(Regex.Replace(type.Name, @"^ColourPickerTool", string.Empty));
 
-                    e.menu.AppendAction($"New {name}", action => {
+                    e.menu.AppendAction($"New {colourPickerToolName}", action => {
                         // Create new colour picker asset
-                        string path = EditorUtility.SaveFilePanelInProject($"Create new {name}", $"New{type.Name}", "asset", "Please enter a file name to save the asset to");
+                        string path = EditorUtility.SaveFilePanelInProject($"Create new {colourPickerToolName}", $"New{type.Name}", "asset", "Please enter a file name to save the asset to");
                         if (path.Length == 0) { return; }
                         var asset = ScriptableObject.CreateInstance(type);
                         AssetDatabase.CreateAsset(asset, path);

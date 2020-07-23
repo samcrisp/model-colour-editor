@@ -9,7 +9,6 @@ using UnityEditor;
 
 namespace ModelColourEditor
 {
-    [CreateAssetMenu(fileName = "New Colour Picker", menuName = "Model Colour Editor/Colour Picker")]
     public class ColourPickerToolRandomPalette : AbstractColourPickerTool
     {
         [HideInInspector]
