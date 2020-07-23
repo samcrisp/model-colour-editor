@@ -331,6 +331,7 @@ namespace ModelColourEditor
 
             var path = Path.Combine(settingsAssetPath.FullName, "Examples\\Materials\\");
             path = path.Replace(Directory.GetParent(Application.dataPath).FullName + "\\", string.Empty);
+            path = Regex.Replace(path, @"^Library\\PackageCache\\.+?\\", "Packages\\com.skatebee.model-colour-editor\\");
 
             var currentRenderPipeline = GraphicsSettings.currentRenderPipeline;
             if (currentRenderPipeline != null)
