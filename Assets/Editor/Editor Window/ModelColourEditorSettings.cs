@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.UI;
+using UnityEngine.Rendering;
 
 namespace ModelColourEditor
 {
@@ -291,13 +292,70 @@ namespace ModelColourEditor
 
             GUI.enabled = ModelColourEditorSettings.HasAsset;
             EditorGUIUtility.labelWidth = 200;
-
-            Editor.DrawPropertiesExcluding(serializedObject, new[] { "m_Script" });
+            
+            // Draw default material field and autofill button
+            var defaultMaterialProperty = serializedObject.FindProperty("defaultMaterial");
+            
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.PropertyField(defaultMaterialProperty);
+            var icon = "TreeEditor.Material";
+            if (EditorGUIUtility.isProSkin) { icon = "d_" + icon; }
+            var iconContent = EditorGUIUtility.IconContent(icon);
+            iconContent.tooltip = "Use example PBR vertex colour material as default";
+            if (GUILayout.Button(iconContent, GUILayout.Width(18), GUILayout.Height(18)))
+            {
+                UseExampleMaterialAsDefault(defaultMaterialProperty);
+            }
+            EditorGUILayout.EndHorizontal();
+            
+            Editor.DrawPropertiesExcluding(serializedObject, new[] { "m_Script", "defaultMaterial" });
 
             GUI.enabled = enabled;
             EditorGUIUtility.labelWidth = labelWidth;
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private void UseExampleMaterialAsDefault(SerializedProperty defaultMaterialProperty)
+        {
+            var settingsAssetPath = Directory
+                .GetParent(AssetDatabase.GetAssetPath(
+                    MonoScript.FromScriptableObject(ModelColourEditorSettings.Instance)));
+
+            var errorMessage = "Cannot find example material";
+            if (settingsAssetPath == null) { Debug.LogWarning(errorMessage); return; }
+            settingsAssetPath = settingsAssetPath.Parent;
+            if (settingsAssetPath == null) { Debug.LogWarning(errorMessage); return; }
+            settingsAssetPath = settingsAssetPath.Parent;
+            if (settingsAssetPath == null) { Debug.LogWarning(errorMessage); return; }
+
+            var path = Path.Combine(settingsAssetPath.FullName, "Examples\\Materials\\");
+            path = path.Replace(Directory.GetParent(Application.dataPath).FullName + "\\", string.Empty);
+
+            var currentRenderPipeline = GraphicsSettings.currentRenderPipeline;
+            if (currentRenderPipeline != null)
+            {
+                var renderPipelineType = currentRenderPipeline.GetType().Name;
+                if (renderPipelineType.Contains("HDRenderPipelineAsset"))
+                {
+                    path += "mat_hdrp_vertexColour_lit.mat";
+                }
+                else if (renderPipelineType.Contains("UniversalRenderPipelineAsset"))
+                {
+                    path += "mat_urp_vertexColour_lit.mat";
+                }
+                else
+                {
+                    path += "mat_inbuilt_vertexColour_lit.mat"; 
+                }
+            }
+            else
+            {
+                path += "mat_inbuilt_vertexColour_lit.mat";
+;           }
+
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            defaultMaterialProperty.objectReferenceValue = material;
         }
     }
 }
