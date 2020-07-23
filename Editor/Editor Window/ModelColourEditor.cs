@@ -17,7 +17,7 @@ namespace ModelColourEditor
 {
     public class ModelColourEditor : EditorWindow
     {
-        public const float MAX_MILLISECONDS_PER_FRAME = 33;
+        private const float MAX_MILLISECONDS_PER_FRAME = 33;
 
         private delegate CustomAssetData MeshDataAction(Mesh mesh, int materialIndex, CustomAssetData data);
         private delegate CustomAssetData ModelDataAction(GameObject asset, CustomAssetData data);
@@ -25,6 +25,7 @@ namespace ModelColourEditor
         private List<Mesh> _selectedMeshes = new List<Mesh>();
         private List<GameObject> _selectedModels = new List<GameObject>();
         private List<CustomAssetData.MeshColor> _previewColours = new List<CustomAssetData.MeshColor>();
+        private List<CustomAssetData.MeshColor> _colourSlotsWithoutColours = new List<CustomAssetData.MeshColor>();
         private Dictionary<Mesh, GameObject> _meshModelDictionary = new Dictionary<Mesh, GameObject>();
         private Dictionary<GameObject, CustomAssetData> _modelDataDictionary = new Dictionary<GameObject, CustomAssetData>();
 
@@ -144,7 +145,7 @@ namespace ModelColourEditor
             _influencesCustomOverrideColours = rootVisualElement.Q<TextElement>("influencesCustomOverrideColours");
 
             _previewColorElement = rootVisualElement.Q<ModelColourEditorPreviewElement>("previewColor");
-            _previewColorElement.SetOverrideColorEvent += color => _colourPicker.value = color;
+            _previewColorElement.setOverrideColorEvent += color => _colourPicker.value = color;
 
             _previewModel = rootVisualElement.Q<IMGUIContainer>("previewModel");
             _previewModel.onGUIHandler = OnDrawPreviewModelGUI;
@@ -240,6 +241,7 @@ namespace ModelColourEditor
             _selectedMeshes.Clear();
             _selectedModels.Clear();
             _previewColours.Clear();
+            _colourSlotsWithoutColours.Clear();
 
             _hasSelection = Selection.activeObject != null;
             
@@ -344,15 +346,23 @@ namespace ModelColourEditor
             _selectedMeshes.Add(mesh);
             _meshModelDictionary[mesh] = model;
 
-            if (mesh.colors != null && mesh.colors.Length > 0) 
+            // Get colours from present vertex colours in submeshes
+            var hasColors = mesh.colors != null && mesh.colors.Length > 0; 
+            for (int i = 0; i < mesh.subMeshCount; i++)
             {
-                for (int i = 0; i < mesh.subMeshCount; i++)
+                if (hasColors)
                 {
                     var submesh = mesh.GetSubMesh(i);
-                    _previewColours.Add(new CustomAssetData.MeshColor(mesh, mesh.colors[submesh.firstVertex], i));
+                    var meshColor = new CustomAssetData.MeshColor(mesh, mesh.colors[submesh.firstVertex], i, true);
+                    _previewColours.Add(meshColor);
+                }
+                else
+                {
+                    var meshColor = new CustomAssetData.MeshColor(mesh, Color.white, i, false);
+                    _colourSlotsWithoutColours.Add(meshColor);
                 }
             }
-
+            
             if (!_selectedModels.Contains(model)) { _selectedModels.Add(model); }
         }
 
@@ -396,7 +406,7 @@ namespace ModelColourEditor
             _influencesCustomOverrideColours.EnableInClassList("has-color", _hasEditorVertexColour);
             _influencesCustomOverrideColours.text = $"{(_hasEditorVertexColour ? "✓" : "✗")} Custom Override Colours";
 
-            _previewColorElement.SetColors(_previewColours);
+            _previewColorElement.SetColors(_previewColours, _colourSlotsWithoutColours.Count, _hasSelection);
             
             _setColourButton.SetEnabled(_hasSelection);
             _removeColourButton.SetEnabled(_hasEditorVertexColour);
@@ -457,17 +467,29 @@ namespace ModelColourEditor
         private void ApplyChangeToMeshes(string multipleWarning, MeshDataAction action)
         {
             // Dialogue popup warning
-            if (_previewColorElement.SelectedIndices.Count > 1)
+            
+            var colourSlotsCount = _previewColorElement.SelectedIndices.Count +
+                        (_previewColorElement.SelectedMeshesWithNoColourInformation
+                            ? _colourSlotsWithoutColours.Count
+                            : 0);
+            
+            if (colourSlotsCount > 1)
             {
-                if (!EditorUtility.DisplayDialog("Multiple mesh confirmation", $"You have {_previewColorElement.SelectedIndices.Count} submeshes selected. {multipleWarning}", "Yes", "No"))
+                if (!EditorUtility.DisplayDialog("Multiple mesh confirmation", $"You have {colourSlotsCount} colour slots selected. {multipleWarning}", "Yes", "No"))
                 {
                     return;
                 }
             }
 
             var modelData = new Dictionary<GameObject, CustomAssetData>();
-
-            foreach(var meshColor in _previewColorElement.SelectedIndices.Select(i => _previewColours[i]))
+            var meshColors = _previewColorElement.SelectedIndices.Select(i => _previewColours[i]);
+            
+            if (_previewColorElement.SelectedMeshesWithNoColourInformation)
+            {
+                meshColors = meshColors.Concat(_colourSlotsWithoutColours);
+            }
+            
+            foreach(var meshColor in meshColors)
             {
                 var mesh = meshColor.mesh;
                 var index = meshColor.materialIndex;

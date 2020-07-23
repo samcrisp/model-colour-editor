@@ -10,6 +10,7 @@ namespace ModelColourEditor
     {
         private Dictionary<Renderer, List<Color>> _colors;
         private bool _shouldProcess = false;
+        private bool _importMaterialColours = false;
 
         public override int GetPostprocessOrder() => 200;
 
@@ -17,16 +18,23 @@ namespace ModelColourEditor
         {
             _colors = new Dictionary<Renderer, List<Color>>();
 
-            _shouldProcess = false;
-            CustomAssetData customAssetData = CustomAssetData.Get(assetImporter);
-            if (customAssetData == null) { _shouldProcess = ModelColourEditorSettings.Instance.importMaterialColoursByDefault; return; }
-            if (!customAssetData.ShouldImportMaterialColors) { return; }
-            _shouldProcess = true;
+            _importMaterialColours = false;
+
+            var customAssetData = CustomAssetData.Get(assetImporter);
+            if (customAssetData == null)
+            {
+                _shouldProcess = _importMaterialColours = ModelColourEditorSettings.Instance.importMaterialColoursByDefault;
+                return;
+            }
+            
+            var hasMeshColours = customAssetData.meshColors != null && customAssetData.meshColors.Count > 0;
+            _importMaterialColours = customAssetData.ShouldImportMaterialColors;
+            _shouldProcess = hasMeshColours || _importMaterialColours;
         }
 
-        public void OnAssignMaterialModel(Material material, Renderer renderer)
+        public Material OnAssignMaterialModel(Material material, Renderer renderer)
         {
-            if (!_shouldProcess) { return; }
+            if (!_shouldProcess) { return null; }
 
             if (!_colors.ContainsKey(renderer))
             {
@@ -34,13 +42,23 @@ namespace ModelColourEditor
             }
 
             _colors[renderer].Add(material.color);
+
+            return null;
         }
 
         public void OnPostprocessModel(GameObject root)
         {
             if (!_shouldProcess) { return; }
 
-            MeshFilter[] meshFilters = root.GetComponentsInChildren<MeshFilter>();
+            HashSet<string> meshHashSet = null;
+            if (!_importMaterialColours)
+            {
+                var customAssetData = CustomAssetData.Get(assetImporter);
+                var meshColorData = customAssetData.meshColors;
+                meshHashSet = new HashSet<string>(meshColorData.Select(mc => mc.meshName));
+            }
+            
+            var meshFilters = root.GetComponentsInChildren<MeshFilter>();
             
             foreach(var meshFilter in meshFilters)
             {
@@ -52,6 +70,7 @@ namespace ModelColourEditor
                 List<Vector3> vertices = new List<Vector3>();
                 List<Vector3> normals = new List<Vector3>();
                 List<List<int>> indices = new List<List<int>>();
+                List<Vector2> uvs = new List<Vector2>();
 
                 for (int i = 0; i < mesh.subMeshCount; i++)
                 {
@@ -70,6 +89,7 @@ namespace ModelColourEditor
                             vertices.Add(mesh.vertices[index]);
                             colors.Add(color);
                             normals.Add(mesh.normals[index]);
+                            uvs.Add(mesh.uv[index]);
                         }
 
                         indices[i].Add(triangleMap[index]);
@@ -77,8 +97,14 @@ namespace ModelColourEditor
                 }
 
                 meshFilter.sharedMesh.SetVertices(vertices);
-                meshFilter.sharedMesh.SetColors(colors);
                 meshFilter.sharedMesh.SetNormals(normals);
+                meshFilter.sharedMesh.SetUVs(0, uvs);
+
+                if (_importMaterialColours || meshHashSet.Contains(mesh.name))
+                {
+                    meshFilter.sharedMesh.SetColors(colors);
+                }
+                
                 for (int i = 0; i < indices.Count; i++)
                 {
                     meshFilter.sharedMesh.SetTriangles(indices[i], i, true);
