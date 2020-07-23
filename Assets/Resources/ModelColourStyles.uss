@@ -117,7 +117,7 @@ Button.active
 ModelColourEditorPreviewElement
 {
     width: 50px;
-    height: 85px;
+    height: 90px;
 }
 
 #previewModel

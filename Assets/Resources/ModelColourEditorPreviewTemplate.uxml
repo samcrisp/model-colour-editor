@@ -3,10 +3,12 @@
         <Label class="preview__label" text="Current Mesh Colours" />
         <Button name="previewSelectAllButton" text="Select All" />
     </VisualElement>
-    <ScrollView mode="Horizontal">
+    <ScrollView mode="Horizontal" name="previewScrollView">
         <VisualElement name="previewElementContainer" class="preview__color-container">
             <VisualElement class="preview__color-element" />
         </VisualElement>
+        <TextElement name="previewNoColoursSet" class="preview__no-colours-set" text="No colours set" />
     </ScrollView>
-    <TextElement name="previewNoColoursSet" class="preview__no-colours-set" text="No colours set" />
+    <Toggle name="selectColourSlotsWithNoColourInformation" text="Select # empty colour slots" />
+    <TextElement name="previewNoMeshesSelected" class="preview__no-colours-set" text="No meshes selected" />
 </UXML>

@@ -10,6 +10,12 @@ namespace ModelColourEditor
 {
     public class ModelColourEditorPreviewElement : VisualElement
     {
+        private const string EMPTY_COLOUR_SLOT_STRING_MULITPLE = "Select {0} empty colour slots";
+        private const string EMPTY_COLOUR_SLOT_STRING_SINGULAR = "Select {0} empty colour slots";
+        private const string EMPTY_COLOUR_SLOT_STRING_EMPTY = "No empty colour slots";
+        
+        public Action<Color> setOverrideColorEvent;
+        
         private VisualElement _container;
         private TextElement _noColoursSet;
         private Button _selectAll;
@@ -19,10 +25,11 @@ namespace ModelColourEditor
         private bool _previousSelectionMax;
         private List<CustomAssetData.MeshColor> _allColors;
         private TextElement _remainingElement;
+        private Toggle _selectColourSlotsWithNoColourInformation;
+        private VisualElement _previewNoMeshesSelected;
 
         public HashSet<int> SelectedIndices => _selectedIndices;
-        
-        public Action<Color> SetOverrideColorEvent;
+        public bool SelectedMeshesWithNoColourInformation => _selectColourSlotsWithNoColourInformation.value;
 
         public ModelColourEditorPreviewElement()
         {
@@ -37,19 +44,26 @@ namespace ModelColourEditor
 
             _container = this.Q<VisualElement>("previewElementContainer");
             _noColoursSet = this.Q<TextElement>("previewNoColoursSet");
+            _selectColourSlotsWithNoColourInformation = this.Q<Toggle>("selectColourSlotsWithNoColourInformation");
+            _previewNoMeshesSelected = this.Q<VisualElement>("previewNoMeshesSelected");
             
             _selectAll = this.Q<Button>("previewSelectAllButton");
             _selectAll.clicked += () => SetSelected(-1);
         }
 
-        public void SetColors(List<CustomAssetData.MeshColor> colors)
+        public void SetColors(List<CustomAssetData.MeshColor> colors, int emptyColourSlotsCount, bool hasSelection)
         {
             this.EnableInClassList("expanded", true);
             _allColors = colors;
             _container.Clear();
-            
+
             for (int i = 0; i < colors.Count; i++)
             {
+                if (!colors[i].hasColor)
+                {
+                    continue;
+                }
+                
                 Color color = colors[i].color;
                 CreateColourElement(color, i);
 
@@ -63,11 +77,29 @@ namespace ModelColourEditor
                     break;
                 }
             }
-
+            
+            _noColoursSet.SetVisible(_container.childCount == 0);
+            
             foreach(var child in this.Children())
             {
-                child.SetVisible(child == _noColoursSet ^ _container.childCount > 0);
+                child.SetVisible(child == _previewNoMeshesSelected ^ hasSelection);
             }
+
+            switch (emptyColourSlotsCount)
+            {
+                case 0:
+                    _selectColourSlotsWithNoColourInformation.text = EMPTY_COLOUR_SLOT_STRING_EMPTY;
+                    break;
+                case 1:
+                    _selectColourSlotsWithNoColourInformation.text = string.Format(EMPTY_COLOUR_SLOT_STRING_SINGULAR, emptyColourSlotsCount);
+                    break;
+                default:
+                    _selectColourSlotsWithNoColourInformation.text = string.Format(EMPTY_COLOUR_SLOT_STRING_MULITPLE, emptyColourSlotsCount);
+                    break;
+            }
+            
+            _selectColourSlotsWithNoColourInformation.SetEnabled(emptyColourSlotsCount > 0);
+            _selectColourSlotsWithNoColourInformation.value = emptyColourSlotsCount > 0;
 
             SetSelected(-1);
         }
@@ -194,7 +226,7 @@ namespace ModelColourEditor
 
                 e.menu.AppendAction("Pick", action => 
                 {
-                    SetOverrideColorEvent?.Invoke(color.gamma);
+                    setOverrideColorEvent?.Invoke(color.gamma);
                 });
             }));
             
