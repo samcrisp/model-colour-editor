@@ -24,12 +24,21 @@ namespace ModelColourEditor
             if (customAssetData == null)
             {
                 _shouldProcess = _importMaterialColours = ModelColourEditorSettings.Instance.importMaterialColoursByDefault;
-                return;
             }
-            
-            var hasMeshColours = customAssetData.meshColors != null && customAssetData.meshColors.Count > 0;
-            _importMaterialColours = customAssetData.ShouldImportMaterialColors;
-            _shouldProcess = hasMeshColours || _importMaterialColours;
+            else
+            {
+                var hasMeshColours = customAssetData.meshColors != null && customAssetData.meshColors.Count > 0;
+                _importMaterialColours = customAssetData.ShouldImportMaterialColors;
+                _shouldProcess = hasMeshColours || _importMaterialColours;
+            }
+
+            var importer = assetImporter as ModelImporter;
+            if (importer != null)
+            {
+                importer.materialImportMode = _shouldProcess
+                    ? ModelImporterMaterialImportMode.None
+                    : ModelImporterMaterialImportMode.ImportStandard;
+            }
         }
 
         public Material OnAssignMaterialModel(Material material, Renderer renderer)
