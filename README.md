@@ -7,6 +7,8 @@
 ![](Media/screenshot.png)
 
 ## Installation
+Requires Unity 2019.3 or later.
+
 Install via one of the following options:
 - Add the following Git URL to the Unity Package Manager:
   >```https://github.com/samcrisp/model-colour-editor.git#release```
