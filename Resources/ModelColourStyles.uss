@@ -116,14 +116,14 @@ Button.active
 
 ModelColourEditorPreviewElement
 {
-    width: 50px;
     height: 90px;
 }
 
 #previewModel
 {
-    flex-grow: 0; 
-    width: 100px;
+    flex-grow: 1;
+    min-width: 100px;
+    min-height: 100px;
 }
 
 .preview__label

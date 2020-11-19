@@ -9,16 +9,16 @@
                 <VisualElement class="section">
                     <TextElement class="section-header" text="Object Selection" />
 
-                    <ue:ObjectField name="selectionMesh" label="Mesh" />
-                    <VisualElement name="selectionMeshesSelected" class="unity-base-field">
-                        <Label class="unity-base-field__label" text="Meshes" />
-                        <TextElement name="selectionMeshesSelectedCount" class="selection-label" text="# selected" />
-                    </VisualElement>
-
                     <ue:ObjectField name="selectionModel" label="Source Asset" />
                     <VisualElement name="selectionModelsSelected" class="unity-base-field">
                         <Label class="unity-base-field__label" text="Source Assets" />
                         <TextElement name="selectionModelsSelectedCount" class="selection-label" text="# selected" />
+                    </VisualElement>
+
+                    <ue:ObjectField name="selectionMesh" label="Mesh" />
+                    <VisualElement name="selectionMeshesSelected" class="unity-base-field">
+                        <Label class="unity-base-field__label" text="Meshes" />
+                        <TextElement name="selectionMeshesSelectedCount" class="selection-label" text="# selected" />
                     </VisualElement>
 
                     <VisualElement class="horizontal-group">
@@ -34,14 +34,16 @@
                             <TextElement name="influencesCustomOverrideColours" class="influences-element" text="✗ Custom Override Colours" />
                         </VisualElement>
                     </VisualElement>
+                    
+                    <VisualElement class="horizontal-group">
+                        <IMGUIContainer name="previewModel" class="hidden" />
+                    </VisualElement>
+                    
                 </VisualElement>
 
                 <VisualElement class="section">
                     <TextElement class="section-header" text="Colour Slots" />
-                    <VisualElement class="horizontal-group">
-                        <ce:ModelColourEditorPreviewElement name="previewColor" />
-                        <IMGUIContainer name="previewModel" />
-                    </VisualElement>
+                    <ce:ModelColourEditorPreviewElement name="previewColor" />
                 </VisualElement>
 
                 <VisualElement class="section">
