@@ -7,7 +7,7 @@
         <ScrollView class="sections">
             <VisualElement name="tabEditor">
                 <VisualElement class="section">
-                    <TextElement class="section-header" text="Selection" />
+                    <TextElement class="section-header" text="Object Selection" />
 
                     <ue:ObjectField name="selectionMesh" label="Mesh" />
                     <VisualElement name="selectionMeshesSelected" class="unity-base-field">
@@ -37,7 +37,7 @@
                 </VisualElement>
 
                 <VisualElement class="section">
-                    <TextElement class="section-header" text="Preview" />
+                    <TextElement class="section-header" text="Colour Slots" />
                     <VisualElement class="horizontal-group">
                         <ce:ModelColourEditorPreviewElement name="previewColor" />
                         <IMGUIContainer name="previewModel" />
