@@ -1,14 +1,22 @@
 <UXML xmlns="UnityEngine.UIElements" xmlns:ue="UnityEditor.UIElements">
     <VisualElement class="preview__label-container">
-        <Label class="preview__label" text="Current Mesh Colours" />
-        <Button name="previewSelectAllButton" text="Select All" />
+        <Label name="selectedColoursLabel" class="preview__label" text="# selected" />
+        <Label text="Select" />
+        <Button name="previewSelectAllButton" text="All" />
+        <Button name="previewSelectNoneButton" text="None" />
     </VisualElement>
     <ScrollView mode="Horizontal" name="previewScrollView">
         <VisualElement name="previewElementContainer" class="preview__color-container">
             <VisualElement class="preview__color-element" />
         </VisualElement>
+        <VisualElement name="previewElementContainerGrouped" class="preview__color-container hidden">
+            <VisualElement class="preview__color-element" />
+        </VisualElement>
         <TextElement name="previewNoColoursSet" class="preview__no-colours-set" text="No colours set" />
     </ScrollView>
-    <Toggle name="selectColourSlotsWithNoColourInformation" text="Select # empty colour slots" />
+    <VisualElement class="preview__options-container">
+        <Toggle name="selectColourSlotsWithNoColourInformation" text="Select # empty colour slots" />
+        <Toggle name="groupSameColours" text="Group same colours" />
+    </VisualElement>
     <TextElement name="previewNoMeshesSelected" class="preview__no-colours-set" text="No meshes selected" />
 </UXML>

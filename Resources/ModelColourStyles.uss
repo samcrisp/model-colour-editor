@@ -184,6 +184,11 @@ ModelColourEditorPreviewElement.expanded #unity-content-container
     border-color: #308aff;
 }
 
+.preview__options-container
+{
+    flex-direction: row;
+}
+
 .preview__no-colours-set
 {
     position: absolute;

@@ -146,6 +146,12 @@ namespace ModelColourEditor
 
             _previewColorElement = rootVisualElement.Q<ModelColourEditorPreviewElement>("previewColor");
             _previewColorElement.setOverrideColorEvent += color => _colourPicker.value = color;
+            _previewColorElement.onSelectionChangeEvent += hasColourSlotSelection =>
+            {
+                _setColourButton.SetEnabled(hasColourSlotSelection && _hasSelection);
+                _removeColourButton.SetEnabled(hasColourSlotSelection && _hasEditorVertexColour);
+                _colourPickerSetColourButton.SetEnabled(hasColourSlotSelection && _hasSelection);
+            };
 
             _previewModel = rootVisualElement.Q<IMGUIContainer>("previewModel");
             _previewModel.onGUIHandler = OnDrawPreviewModelGUI;
@@ -335,6 +341,8 @@ namespace ModelColourEditor
 
         private void GetMeshColorsCoroutine(Mesh mesh)
         {
+            if (mesh == null) { return; }
+            
             if (!_meshModelDictionary.TryGetValue(mesh, out var model))
             {
                 model = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GetAssetPath(mesh));
@@ -400,7 +408,7 @@ namespace ModelColourEditor
 
             _sceneReferencesCountElement.text = _sceneReferencesCount.ToString();
 
-            _influencesModelVertexColours.AddToClassList("hidden");
+            _influencesModelVertexColours.SetVisible(false);
             _influencesModelMaterialColours.EnableInClassList("has-color", _hasMaterialImportColour);
             _influencesModelMaterialColours.text = $"{(_hasMaterialImportColour ? "✓" : "✗")} Model Material Colours";
             _influencesCustomOverrideColours.EnableInClassList("has-color", _hasEditorVertexColour);
@@ -408,9 +416,14 @@ namespace ModelColourEditor
 
             _previewColorElement.SetColors(_previewColours, _colourSlotsWithoutColours.Count, _hasSelection);
             
-            _setColourButton.SetEnabled(_hasSelection);
-            _removeColourButton.SetEnabled(_hasEditorVertexColour);
-            _colourPickerSetColourButton.SetEnabled(_hasSelection);
+            // _setColourButton.SetEnabled(_hasSelection);
+            // _removeColourButton.SetEnabled(_hasEditorVertexColour);
+            // _colourPickerSetColourButton.SetEnabled(_hasSelection);
+            
+            _setColourButton.SetEnabled(false);
+            _removeColourButton.SetEnabled(false);
+            _colourPickerSetColourButton.SetEnabled(false);
+            
 
             GenerateImportMaterialButtons();
 
@@ -468,7 +481,9 @@ namespace ModelColourEditor
         {
             // Dialogue popup warning
             
-            var colourSlotsCount = _previewColorElement.SelectedIndices.Count +
+            var selectedIndices = _previewColorElement.GetSelectedIndices();
+            
+            var colourSlotsCount = selectedIndices.Count +
                         (_previewColorElement.SelectedMeshesWithNoColourInformation
                             ? _colourSlotsWithoutColours.Count
                             : 0);
@@ -482,7 +497,7 @@ namespace ModelColourEditor
             }
 
             var modelData = new Dictionary<GameObject, CustomAssetData>();
-            var meshColors = _previewColorElement.SelectedIndices.Select(i => _previewColours[i]);
+            var meshColors = selectedIndices.Select(i => _previewColours[i]);
             
             if (_previewColorElement.SelectedMeshesWithNoColourInformation)
             {
