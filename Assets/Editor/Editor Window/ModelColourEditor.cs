@@ -416,10 +416,6 @@ namespace ModelColourEditor
 
             _previewColorElement.SetColors(_previewColours, _colourSlotsWithoutColours.Count, _hasSelection);
             
-            // _setColourButton.SetEnabled(_hasSelection);
-            // _removeColourButton.SetEnabled(_hasEditorVertexColour);
-            // _colourPickerSetColourButton.SetEnabled(_hasSelection);
-            
             _setColourButton.SetEnabled(false);
             _removeColourButton.SetEnabled(false);
             _colourPickerSetColourButton.SetEnabled(false);
