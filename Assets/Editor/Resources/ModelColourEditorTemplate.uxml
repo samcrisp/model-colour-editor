@@ -54,7 +54,7 @@
                         </VisualElement>
                         <VisualElement>
                             <Button name="setColourButton" text="Set Colour" />
-                            <Button name="removeColourButton" text="Remove Colour" />
+                            <Button name="removeColourButton" text="Reset Colour" />
                         </VisualElement>
                     </VisualElement>
                 </VisualElement>
