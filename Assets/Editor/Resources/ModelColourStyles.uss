@@ -153,9 +153,14 @@ ModelColourEditorPreviewElement
     margin-right: 3px;
 }
 
-ModelColourEditorPreviewElement.expanded #unity-content-container
+ModelColourEditorPreviewElement #unity-content-container
 {
     flex-grow: 1;
+}
+
+ModelColourEditorPreviewElement.expanded #unity-content-container
+{
+    overflow: visible;
 }
 
 .preview__color-element
@@ -182,6 +187,11 @@ ModelColourEditorPreviewElement.expanded #unity-content-container
 {
     border-width: 2px;
     border-color: #308aff;
+}
+
+.preview__empty-color-element
+{
+    background-color: rgba(0,0,0,0);
 }
 
 .preview__options-container
