@@ -22,7 +22,7 @@ namespace ModelColourEditor
         private const int UNEXPANDED_COLOUR_COUNT = 10;
 
         public Action<Color> setOverrideColorEvent;
-        public Action<bool> onSelectionChangeEvent;
+        public Action<bool, bool> onSelectionChangeEvent;
 
         private VisualElement _container;
         private VisualElement _containerGrouped;
@@ -35,7 +35,6 @@ namespace ModelColourEditor
         private bool _previousSelectionMax;
         private VisualElement _remainingElement;
         private VisualElement _remainingElementGrouped;
-        private Toggle _selectColourSlotsWithNoColourInformation;
         private Toggle _groupSameColours;
         private VisualElement _previewNoMeshesSelected;
         private readonly List<Color?> _allColors = new List<Color?>();
@@ -47,8 +46,8 @@ namespace ModelColourEditor
         private int _elementGroupedCount;
         private Label _selectedColoursLabel;
 
-        public bool SelectedMeshesWithNoColourInformation => _selectColourSlotsWithNoColourInformation.value;
         public bool GroupSameColours => _groupSameColours.value;
+        public int ColourSlotCount { get; private set; }
 
         public ModelColourEditorPreviewElement()
         {
@@ -85,7 +84,6 @@ namespace ModelColourEditor
             _container = this.Q<VisualElement>("previewElementContainer");
             _containerGrouped = this.Q<VisualElement>("previewElementContainerGrouped");
             _noColoursSet = this.Q<TextElement>("previewNoColoursSet");
-            _selectColourSlotsWithNoColourInformation = this.Q<Toggle>("selectColourSlotsWithNoColourInformation");
             _previewNoMeshesSelected = this.Q<VisualElement>("previewNoMeshesSelected");
             _groupSameColours = this.Q<Toggle>("groupSameColours");
             _groupSameColours.RegisterValueChangedCallback(evt => OnGroupSameColoursValueChanged(evt.newValue));
@@ -158,10 +156,12 @@ namespace ModelColourEditor
 
                 if (_elementCount <= UNEXPANDED_COLOUR_COUNT)
                 {
-                    colourElement = CreateColourElement(color, _elementCount - 1);
+                    colourElement = CreateColourElement(color, i);
                     _container.Add(colourElement);
                 }
             }
+
+            var colourSlotsCount = _elementCount;
 
             // Add empty colour slots
             for (int i = 0; i < emptyColourSlotsCount; i++)
@@ -182,12 +182,12 @@ namespace ModelColourEditor
                     }
                 }
 
-                _emptyColourGroup.Add(i);
+                _emptyColourGroup.Add(colourSlotsCount + i);
                 _elementCount++;
 
                 if (_elementCount <= UNEXPANDED_COLOUR_COUNT)
                 {
-                    colourElement = CreateEmptyColourElement(_elementCount - 1);
+                    colourElement = CreateEmptyColourElement(colourSlotsCount + i);
                     _container.Add(colourElement);
                 }
             }
@@ -202,25 +202,9 @@ namespace ModelColourEditor
             {
                 child.SetVisible(child == _previewNoMeshesSelected ^ hasSelection);
             }
-
-            switch (emptyColourSlotsCount)
-            {
-                case 0:
-                    _selectColourSlotsWithNoColourInformation.text = EMPTY_COLOUR_SLOT_STRING_EMPTY;
-                    break;
-                case 1:
-                    _selectColourSlotsWithNoColourInformation.text =
-                        string.Format(EMPTY_COLOUR_SLOT_STRING_SINGULAR, emptyColourSlotsCount);
-                    break;
-                default:
-                    _selectColourSlotsWithNoColourInformation.text =
-                        string.Format(EMPTY_COLOUR_SLOT_STRING_MULTIPLE, emptyColourSlotsCount);
-                    break;
-            }
-
-            _selectColourSlotsWithNoColourInformation.SetEnabled(emptyColourSlotsCount > 0);
-            _selectColourSlotsWithNoColourInformation.value = emptyColourSlotsCount > 0;
-
+            
+            ColourSlotCount = _allColors.Count - emptyColourSlotsCount;
+            
             SetSelected(SELECT_NONE);
         }
 
@@ -394,6 +378,8 @@ namespace ModelColourEditor
                 selectNone &= !enable;
             }
 
+            bool hasColourSlotSelection = _selectedIndices.Any(i => i < ColourSlotCount);
+
             _selectAll.SetEnabled(!selectAll);
             _selectNone.SetEnabled(!selectNone);
 
@@ -404,7 +390,7 @@ namespace ModelColourEditor
                 : COLOUR_SLOTS_SELECTED_STRING_EMPTY;
             _selectedColoursLabel.SetEnabled(hasSelection);
 
-            onSelectionChangeEvent?.Invoke(hasSelection);
+            onSelectionChangeEvent?.Invoke(hasSelection, hasColourSlotSelection);
         }
 
         private VisualElement CreateColourElement(Color color, int i)
@@ -432,6 +418,10 @@ namespace ModelColourEditor
             colorElement.AddToClassList("preview__empty-color-element");
             colorElement.RegisterCallback<MouseDownEvent, int>((e, index) => SetSelected(index, e), i);
 
+            VisualElement image = new VisualElement();
+            image.AddToClassList("preview__color-element-icon");
+            colorElement.Add(image);
+            
             return colorElement;
         }
 

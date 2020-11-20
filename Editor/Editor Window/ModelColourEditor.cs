@@ -146,11 +146,11 @@ namespace ModelColourEditor
 
             _previewColorElement = rootVisualElement.Q<ModelColourEditorPreviewElement>("previewColor");
             _previewColorElement.setOverrideColorEvent += color => _colourPicker.value = color;
-            _previewColorElement.onSelectionChangeEvent += hasColourSlotSelection =>
+            _previewColorElement.onSelectionChangeEvent += (hasSelection, hasColourSlotSelection) =>
             {
-                _setColourButton.SetEnabled(hasColourSlotSelection && _hasSelection);
+                _setColourButton.SetEnabled(hasSelection && _hasSelection);
                 _removeColourButton.SetEnabled(hasColourSlotSelection && _hasEditorVertexColour);
-                _colourPickerSetColourButton.SetEnabled(hasColourSlotSelection && _hasSelection);
+                _colourPickerSetColourButton.SetEnabled(hasSelection && _hasSelection);
             };
 
             _previewModel = rootVisualElement.Q<IMGUIContainer>("previewModel");
@@ -479,10 +479,7 @@ namespace ModelColourEditor
             
             var selectedIndices = _previewColorElement.GetSelectedIndices();
             
-            var colourSlotsCount = selectedIndices.Count +
-                        (_previewColorElement.SelectedMeshesWithNoColourInformation
-                            ? _colourSlotsWithoutColours.Count
-                            : 0);
+            var colourSlotsCount = selectedIndices.Count;
             
             if (colourSlotsCount > 1)
             {
@@ -493,12 +490,7 @@ namespace ModelColourEditor
             }
 
             var modelData = new Dictionary<GameObject, CustomAssetData>();
-            var meshColors = selectedIndices.Select(i => _previewColours[i]);
-            
-            if (_previewColorElement.SelectedMeshesWithNoColourInformation)
-            {
-                meshColors = meshColors.Concat(_colourSlotsWithoutColours);
-            }
+            var meshColors = selectedIndices.Select(i => i >= _previewColorElement.ColourSlotCount ? _colourSlotsWithoutColours[i - _previewColorElement.ColourSlotCount] : _previewColours[i]); // Empty colour slots indexed from 0 after slot count exceeded 
             
             foreach(var meshColor in meshColors)
             {

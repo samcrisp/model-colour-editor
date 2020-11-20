@@ -167,7 +167,7 @@ ModelColourEditorPreviewElement.expanded #unity-content-container
 {
     flex-grow: 1;
     flex-shrink: 0;
-    min-width: 17px;
+    min-width: 25px;
     background-color: #FFFFFF;
     border-width: 1px;
     border-color: #939393;
@@ -191,7 +191,16 @@ ModelColourEditorPreviewElement.expanded #unity-content-container
 
 .preview__empty-color-element
 {
-    background-color: rgba(0,0,0,0);
+    background-color: #ffffff;
+}
+
+.preview__color-element-icon
+{
+    background-image: resource("empty-colour-element");
+    -unity-background-scale-mode: scale-to-fit;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    flex-grow: 1;
 }
 
 .preview__options-container

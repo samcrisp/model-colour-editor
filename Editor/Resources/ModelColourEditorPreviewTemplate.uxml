@@ -15,7 +15,6 @@
         <TextElement name="previewNoColoursSet" class="preview__no-colours-set" text="No colours set" />
     </ScrollView>
     <VisualElement class="preview__options-container">
-        <Toggle name="selectColourSlotsWithNoColourInformation" text="Select # empty colour slots" />
         <Toggle name="groupSameColours" text="Group same colours" />
     </VisualElement>
     <TextElement name="previewNoMeshesSelected" class="preview__no-colours-set" text="No meshes selected" />
