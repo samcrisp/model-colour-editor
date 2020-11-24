@@ -417,6 +417,7 @@ namespace ModelColourEditor
             colorElement.AddToClassList("preview__color-element");
             colorElement.AddToClassList("preview__empty-color-element");
             colorElement.RegisterCallback<MouseDownEvent, int>((e, index) => SetSelected(index, e), i);
+            colorElement.tooltip = "No colour";
 
             VisualElement image = new VisualElement();
             image.AddToClassList("preview__color-element-icon");
