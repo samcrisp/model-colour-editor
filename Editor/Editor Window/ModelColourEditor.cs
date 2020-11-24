@@ -18,6 +18,7 @@ namespace ModelColourEditor
     public class ModelColourEditor : EditorWindow
     {
         private const float MAX_MILLISECONDS_PER_FRAME = 33;
+        private const string SETTINGS_EDITOR_PREFS_KEY = "ModelColourEditorSettings";
 
         private delegate CustomAssetData MeshDataAction(Mesh mesh, int materialIndex, CustomAssetData data);
         private delegate CustomAssetData ModelDataAction(GameObject asset, CustomAssetData data);
@@ -87,7 +88,13 @@ namespace ModelColourEditor
 
             Selection.selectionChanged += OnSelectionChanged;
 
-            var settings = JsonUtility.FromJson<EditorSettings>(EditorPrefs.GetString("ModelColourEditorSettings"));
+            // Create new EditorPrefs key on first time use
+            if (!EditorPrefs.HasKey(SETTINGS_EDITOR_PREFS_KEY))
+            {
+                EditorPrefs.SetString(SETTINGS_EDITOR_PREFS_KEY, JsonUtility.ToJson(new EditorSettings()));
+            }
+            
+            var settings = JsonUtility.FromJson<EditorSettings>(EditorPrefs.GetString(SETTINGS_EDITOR_PREFS_KEY));
             _colourPicker.value = settings.selectedColor;
             _colourPickerAsset.value = AssetDatabase.LoadAssetAtPath<AbstractColourPickerTool>(AssetDatabase.GUIDToAssetPath(settings.colourPickerTool));
 
@@ -104,7 +111,7 @@ namespace ModelColourEditor
                 colourPickerTool = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(_colourPickerAsset.value))
             };
 
-            EditorPrefs.SetString("ModelColourEditorSettings", JsonUtility.ToJson(settings));
+            EditorPrefs.SetString(SETTINGS_EDITOR_PREFS_KEY, JsonUtility.ToJson(settings));
         }
 
         private void Build()
