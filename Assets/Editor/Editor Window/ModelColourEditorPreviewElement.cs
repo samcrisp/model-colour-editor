@@ -215,10 +215,12 @@ namespace ModelColourEditor
                 container.ElementAt(container.childCount - 1).SetVisible(false);
 
                 var remainingElement = new TextElement();
+                var remainingColourCount = count - (UNEXPANDED_COLOUR_COUNT - 1);
                 remainingElement.AddToClassList("preview__color-element");
-                remainingElement.text = $"+{count - (UNEXPANDED_COLOUR_COUNT - 1)}";
+                remainingElement.text = $"+{remainingColourCount}";
                 remainingElement.RegisterCallback<MouseDownEvent, VisualElement>(OnClickRemainingColors,
                     remainingElement);
+                remainingElement.tooltip = $"Click to show {remainingColourCount} more colours";
                 container.Add(remainingElement);
                 return remainingElement;
             }
