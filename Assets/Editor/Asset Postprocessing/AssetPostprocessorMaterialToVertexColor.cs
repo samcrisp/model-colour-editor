@@ -31,13 +31,14 @@ namespace ModelColourEditor
                 _importMaterialColours = customAssetData.ShouldImportMaterialColors;
                 _shouldProcess = hasMeshColours || _importMaterialColours;
             }
-
-            var importer = assetImporter as ModelImporter;
-            if (importer != null)
+            
+            if (_shouldProcess)
             {
-                importer.materialImportMode = _shouldProcess
-                    ? ModelImporterMaterialImportMode.None
-                    : ModelImporterMaterialImportMode.ImportStandard;
+                var importer = assetImporter as ModelImporter;
+                if (importer != null)
+                {
+                    importer.materialImportMode = ModelImporterMaterialImportMode.None;
+                }
             }
         }
 
