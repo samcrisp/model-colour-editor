@@ -23,12 +23,12 @@ namespace ModelColourEditor
         private delegate CustomAssetData MeshDataAction(Mesh mesh, int materialIndex, CustomAssetData data);
         private delegate CustomAssetData ModelDataAction(GameObject asset, CustomAssetData data);
 
-        private List<Mesh> _selectedMeshes = new List<Mesh>();
-        private List<GameObject> _selectedModels = new List<GameObject>();
-        private List<CustomAssetData.MeshColor> _previewColours = new List<CustomAssetData.MeshColor>();
-        private List<CustomAssetData.MeshColor> _colourSlotsWithoutColours = new List<CustomAssetData.MeshColor>();
-        private Dictionary<Mesh, GameObject> _meshModelDictionary = new Dictionary<Mesh, GameObject>();
-        private Dictionary<GameObject, CustomAssetData> _modelDataDictionary = new Dictionary<GameObject, CustomAssetData>();
+        private readonly List<Mesh> _selectedMeshes = new List<Mesh>();
+        private readonly List<GameObject> _selectedModels = new List<GameObject>();
+        private readonly List<CustomAssetData.MeshColor> _previewColours = new List<CustomAssetData.MeshColor>();
+        private readonly List<CustomAssetData.MeshColor> _colourSlotsWithoutColours = new List<CustomAssetData.MeshColor>();
+        private readonly Dictionary<Mesh, GameObject> _meshModelDictionary = new Dictionary<Mesh, GameObject>();
+        private readonly Dictionary<GameObject, CustomAssetData> _modelDataDictionary = new Dictionary<GameObject, CustomAssetData>();
 
         private ObjectField _modelField;
         private ObjectField _meshField;
@@ -63,6 +63,7 @@ namespace ModelColourEditor
         private float _stopwatchThreshold;
         private Queue<System.Action> _taskQueue = new Queue<System.Action>();
         private List<MeshFilter> _meshFilters;
+        private List<SkinnedMeshRenderer> _skinnedMeshRenderers;
         private Button _tabEditorButton;
         private Button _tabSettingsButton;
         private int _tabIndex;
@@ -268,7 +269,8 @@ namespace ModelColourEditor
                 else if (selection is GameObject)
                 {
                     var meshFilters = (selection as GameObject).GetComponentsInChildren<MeshFilter>();
-                    IEnumerable<Mesh> meshes = meshFilters.Select(m => m.sharedMesh).Distinct();
+                    var skinnedMeshRenderers = (selection as GameObject).GetComponentsInChildren<SkinnedMeshRenderer>();
+                    IEnumerable<Mesh> meshes = meshFilters.Select(m => m.sharedMesh).Concat(skinnedMeshRenderers.Select(m => m.sharedMesh)).Distinct();
 
                     foreach (var mesh in meshes)
                     {
@@ -283,6 +285,7 @@ namespace ModelColourEditor
         private void GetSceneReferences()
         {
             _meshFilters = FindObjectsOfType<MeshFilter>().ToList();
+            _skinnedMeshRenderers = FindObjectsOfType<SkinnedMeshRenderer>().ToList();
             
             _hasEditorVertexColour = false;
             _hasMaterialImportColour = false;
@@ -304,6 +307,15 @@ namespace ModelColourEditor
                 {
                     _sceneReferencesCount++;
                     _meshFilters.RemoveAt(i);
+                }
+            }
+            
+            for (int i = _skinnedMeshRenderers.Count - 1; i >= 0; i--)
+            {
+                if (_skinnedMeshRenderers[i].sharedMesh == mesh)
+                {
+                    _sceneReferencesCount++;
+                    _skinnedMeshRenderers.RemoveAt(i);
                 }
             }
 

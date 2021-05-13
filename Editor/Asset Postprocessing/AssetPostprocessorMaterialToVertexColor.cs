@@ -8,7 +8,7 @@ namespace ModelColourEditor
 {
     public class AssetPostprocessorMaterialToVertexColor : AssetPostprocessor
     {
-        private Dictionary<Renderer, List<Color>> _colors;
+        private Dictionary<int, List<Color>> _colors; // mesh instance id -> colours
         private bool _shouldProcess = false;
         private bool _importMaterialColours = false;
 
@@ -16,7 +16,7 @@ namespace ModelColourEditor
 
         public void OnPreprocessModel()
         {
-            _colors = new Dictionary<Renderer, List<Color>>();
+            _colors = new Dictionary<int, List<Color>>();
 
             _importMaterialColours = false;
 
@@ -46,12 +46,14 @@ namespace ModelColourEditor
         {
             if (!_shouldProcess) { return null; }
 
-            if (!_colors.ContainsKey(renderer))
+            var id = renderer.GetComponent<MeshFilter>().sharedMesh.GetInstanceID();
+
+            if (!_colors.ContainsKey(id))
             {
-                _colors.Add(renderer, new List<Color>());
+                _colors.Add(id, new List<Color>());
             }
 
-            _colors[renderer].Add(material.color);
+            _colors[id].Add(material.color);
 
             return null;
         }
@@ -67,70 +69,187 @@ namespace ModelColourEditor
                 var meshColorData = customAssetData.meshColors;
                 meshHashSet = new HashSet<string>(meshColorData.Select(mc => mc.meshName));
             }
-            
-            var meshFilters = root.GetComponentsInChildren<MeshFilter>();
-            
-            foreach(var meshFilter in meshFilters)
+
+            foreach(var meshFilter in root.GetComponentsInChildren<MeshFilter>())
             {
-                Mesh mesh = meshFilter.sharedMesh;
-                if (mesh.vertexCount == 0) { continue; }
-                Renderer renderer = meshFilter.GetComponent<MeshRenderer>();
-
-                List<Color> colors = new List<Color>();
-                List<Vector3> vertices = new List<Vector3>();
-                List<Vector3> normals = new List<Vector3>();
-                List<List<int>> indices = new List<List<int>>();
-                List<Vector2> uvs = new List<Vector2>();
-
-                for (int i = 0; i < mesh.subMeshCount; i++)
-                {
-                    indices.Add(new List<int>());
-                    Dictionary<int, int> triangleMap = new Dictionary<int, int>();
-                    var subMesh = mesh.GetSubMesh(i);
-                    Color color = _colors[renderer][i];
-                    
-                    for(int j = subMesh.indexStart; j < subMesh.indexStart + subMesh.indexCount; j++)
-                    {
-                        int index = mesh.triangles[j];
-                        
-                        if (!triangleMap.ContainsKey(index))
-                        {
-                            triangleMap.Add(index, vertices.Count);
-                            vertices.Add(mesh.vertices[index]);
-                            colors.Add(color);
-                            normals.Add(mesh.normals[index]);
-                            uvs.Add(mesh.uv[index]);
-                        }
-
-                        indices[i].Add(triangleMap[index]);
-                    }
-                }
-
-                meshFilter.sharedMesh.SetVertices(vertices);
-                meshFilter.sharedMesh.SetNormals(normals);
-                meshFilter.sharedMesh.SetUVs(0, uvs);
-
-                if (_importMaterialColours || meshHashSet.Contains(mesh.name))
-                {
-                    meshFilter.sharedMesh.SetColors(colors);
-                }
-                
-                for (int i = 0; i < indices.Count; i++)
-                {
-                    meshFilter.sharedMesh.SetTriangles(indices[i], i, true);
-                }
-
-                // meshFilter.sharedMesh.subMeshCount = 1;
-                // meshFilter.sharedMesh.SetSubMesh(0, new UnityEngine.Rendering.SubMeshDescriptor(0, mesh.vertexCount));
-                // renderer.sharedMaterials = new Material[1] { _defaultMaterial };
-
-                if (ModelColourEditorSettings.Instance.defaultMaterial != null)
-                {
-                    renderer.sharedMaterials = Enumerable.Repeat(ModelColourEditorSettings.Instance.defaultMaterial, meshFilter.sharedMesh.subMeshCount).ToArray();
-                }
+                ProcessMesh(meshFilter.sharedMesh, meshFilter.GetComponent<Renderer>(), meshHashSet);
+            }
+            
+            foreach(var skinnedMeshRenderer in root.GetComponentsInChildren<SkinnedMeshRenderer>())
+            {
+                ProcessMesh(skinnedMeshRenderer.sharedMesh, skinnedMeshRenderer, meshHashSet);
             }
 
             Debug.Log($"Imported material to vertex colours {assetPath}");
+        }
+
+        private void ProcessMesh(Mesh sharedMesh, Renderer renderer, HashSet<string> meshHashSet)
+        {
+            if (sharedMesh.vertexCount == 0) { return; }
+
+            var colors = new List<Color>();
+            var vertices = new List<Vector3>();
+            var normals = new List<Vector3>();
+            var tangents = new List<Vector4>();
+            var indices = new List<List<int>>();
+            var uvs = new List<Vector2>();
+            var blendShapeData = BlendShapeData.CreateFromMesh(sharedMesh);
+
+            for (int i = 0; i < sharedMesh.subMeshCount; i++)
+            {
+                indices.Add(new List<int>());
+                Dictionary<int, int> triangleMap = new Dictionary<int, int>();
+                var subMesh = sharedMesh.GetSubMesh(i);
+                Color color = _colors[sharedMesh.GetInstanceID()][i];
+                
+                for(int j = subMesh.indexStart; j < subMesh.indexStart + subMesh.indexCount; j++)
+                {
+                    int index = sharedMesh.triangles[j];
+                    
+                    if (!triangleMap.ContainsKey(index))
+                    {
+                        triangleMap.Add(index, vertices.Count);
+                        vertices.Add(sharedMesh.vertices[index]);
+                        colors.Add(color);
+                        normals.Add(sharedMesh.normals[index]);
+                        tangents.Add(sharedMesh.tangents[index]);
+                        uvs.Add(sharedMesh.uv[index]);
+                        blendShapeData.AddIndex(index);
+                    }
+
+                    indices[i].Add(triangleMap[index]);
+                }
+            }
+
+            sharedMesh.SetVertices(vertices);
+            sharedMesh.SetNormals(normals);
+            sharedMesh.SetUVs(0, uvs);
+            sharedMesh.SetTangents(tangents);
+
+            // Apply blend shape data
+            blendShapeData.ApplyToMesh(sharedMesh);
+            
+            if (_importMaterialColours || meshHashSet.Contains(sharedMesh.name))
+            {
+                sharedMesh.SetColors(colors);
+            }
+            
+            for (int i = 0; i < indices.Count; i++)
+            {
+                sharedMesh.SetTriangles(indices[i], i, true);
+            }
+
+            // meshFilter.sharedMesh.subMeshCount = 1;
+            // meshFilter.sharedMesh.SetSubMesh(0, new UnityEngine.Rendering.SubMeshDescriptor(0, mesh.vertexCount));
+            // renderer.sharedMaterials = new Material[1] { _defaultMaterial };
+
+            if (ModelColourEditorSettings.Instance.defaultMaterial != null)
+            {
+                renderer.sharedMaterials = Enumerable.Repeat(ModelColourEditorSettings.Instance.defaultMaterial, sharedMesh.subMeshCount).ToArray();
+            }
+        }
+
+        private class BlendShapeData
+        {
+            public int blendShapeCount;
+            public BlendShapeShape[] blendShapes;
+
+            public static BlendShapeData CreateFromMesh(Mesh sharedMesh)
+            {
+                var blendShapeData = new BlendShapeData
+                {
+                    blendShapeCount = sharedMesh.blendShapeCount,
+                    blendShapes = new BlendShapeShape[sharedMesh.blendShapeCount]
+                };
+                
+                for (int i = 0; i < blendShapeData.blendShapeCount; i++)
+                {
+                    var blendShapeFrameCount = sharedMesh.GetBlendShapeFrameCount(i);
+                    blendShapeData.blendShapes[i] = new BlendShapeShape
+                    {
+                        frameCount = blendShapeFrameCount,
+                        name = sharedMesh.GetBlendShapeName(i),
+                        frames = new BlendShapeFrame[blendShapeFrameCount]
+                    };
+
+                    for (int j = 0; j < blendShapeFrameCount; j++)
+                    {
+                        var blendShapeFrame = new BlendShapeFrame
+                        {
+                            weight = sharedMesh.GetBlendShapeFrameWeight(i, j),
+                            shapeIndex = i,
+                            frameIndex = j,
+                            deltaNormals = new Vector3[sharedMesh.vertexCount],
+                            deltaTangents = new Vector3[sharedMesh.vertexCount],
+                            deltaVertices = new Vector3[sharedMesh.vertexCount],
+                            newDeltaNormals = new List<Vector3>(),
+                            newDeltaTangents = new List<Vector3>(),
+                            newDeltaVertices = new List<Vector3>()
+                        };
+                        
+                        sharedMesh.GetBlendShapeFrameVertices(i, j, blendShapeFrame.deltaVertices,
+                            blendShapeFrame.deltaNormals, blendShapeFrame.deltaTangents);
+
+                        blendShapeData.blendShapes[i].frames[j] = blendShapeFrame;
+                    }
+                }
+
+                return blendShapeData;
+            }
+
+            public void ApplyToMesh(Mesh sharedMesh)
+            {
+                sharedMesh.ClearBlendShapes();
+                for (var i = 0; i < blendShapeCount; i++)
+                {
+                    var blendShape = blendShapes[i];
+                
+                    for (int j = 0; j < blendShape.frameCount; j++)
+                    {
+                        var frame = blendShape.frames[j];
+                        
+                        sharedMesh.AddBlendShapeFrame(blendShape.name, frame.weight, frame.newDeltaVertices.ToArray(),
+                            frame.newDeltaNormals.ToArray(), frame.newDeltaTangents.ToArray());
+                    }
+                }
+            }
+
+            public void AddIndex(int index)
+            {
+                for (var i = 0; i < blendShapeCount; i++)
+                {
+                    var blendShape = blendShapes[i];
+                
+                    for (int j = 0; j < blendShape.frameCount; j++)
+                    {
+                        var frame = blendShape.frames[j];
+                    
+                        frame.newDeltaNormals.Add(frame.deltaNormals[index]);
+                        frame.newDeltaVertices.Add(frame.deltaVertices[index]);
+                        frame.newDeltaTangents.Add(frame.deltaTangents[index]);
+                    }
+                }
+            }
+        }
+
+        private class BlendShapeShape
+        {
+            public int frameCount;
+            public string name;
+            public BlendShapeFrame[] frames;
+        }
+
+        private class BlendShapeFrame
+        {
+            public float weight;
+            public int shapeIndex;
+            public int frameIndex;
+            public Vector3[] deltaVertices;
+            public Vector3[] deltaNormals;
+            public Vector3[] deltaTangents;
+            public List<Vector3> newDeltaVertices;
+            public List<Vector3> newDeltaNormals;
+            public List<Vector3> newDeltaTangents;
         }
     }
 }
