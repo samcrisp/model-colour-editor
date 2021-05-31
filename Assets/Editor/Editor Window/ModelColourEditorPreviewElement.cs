@@ -397,17 +397,20 @@ namespace ModelColourEditor
 
         private VisualElement CreateColourElement(Color color, int i)
         {
+            // Correct colour space for rendering in UI
+            var uiColor = PlayerSettings.colorSpace == ColorSpace.Gamma ? color : color.gamma;
+            
             VisualElement colorElement = new VisualElement();
             colorElement.AddToClassList("preview__color-element");
-            colorElement.style.backgroundColor = color.gamma.ToAlpha(1);
+            colorElement.style.backgroundColor = uiColor.ToAlpha(1);
             colorElement.RegisterCallback<MouseDownEvent, int>((e, index) => SetSelected(index, e), i);
 
             colorElement.AddManipulator(new ContextualMenuManipulator(e =>
             {
                 e.menu.AppendAction("Copy",
-                    action => { EditorGUIUtility.systemCopyBuffer = "#" + ColorUtility.ToHtmlStringRGB(color.gamma); });
+                    action => { EditorGUIUtility.systemCopyBuffer = "#" + ColorUtility.ToHtmlStringRGB(uiColor); });
 
-                e.menu.AppendAction("Pick", action => { setOverrideColorEvent?.Invoke(color.gamma); });
+                e.menu.AppendAction("Pick", action => { setOverrideColorEvent?.Invoke(uiColor); });
             }));
 
             return colorElement;
