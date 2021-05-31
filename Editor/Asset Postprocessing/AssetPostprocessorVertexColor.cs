@@ -46,7 +46,8 @@ namespace ModelColourEditor
                     if (meshColorDictionary.TryGetValue(i, out var meshColor))
                     {
                         var subMesh = sharedMesh.GetSubMesh(i);
-                        System.Array.Copy(Enumerable.Repeat(meshColor.color.linear, subMesh.vertexCount).ToArray(), 0, colors, subMesh.firstVertex, subMesh.vertexCount);
+                        var color = PlayerSettings.colorSpace == ColorSpace.Gamma ? meshColor.color : meshColor.color.linear;
+                        System.Array.Copy(Enumerable.Repeat(color, subMesh.vertexCount).ToArray(), 0, colors, subMesh.firstVertex, subMesh.vertexCount);
                     }
                 }
 

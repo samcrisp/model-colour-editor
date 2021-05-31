@@ -52,8 +52,8 @@ namespace ModelColourEditor
             {
                 _colors.Add(id, new List<Color>());
             }
-
-            _colors[id].Add(material.color);
+            
+            _colors[id].Add(PlayerSettings.colorSpace == ColorSpace.Gamma ? material.color.gamma : material.color);
 
             return null;
         }
