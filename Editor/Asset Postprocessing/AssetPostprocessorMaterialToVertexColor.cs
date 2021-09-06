@@ -94,7 +94,8 @@ namespace ModelColourEditor
             var indices = new List<List<int>>();
             var uvs = new List<Vector2>();
             var blendShapeData = BlendShapeData.CreateFromMesh(sharedMesh);
-
+            var hasUvs = sharedMesh.uv.Length > 0;
+            
             for (int i = 0; i < sharedMesh.subMeshCount; i++)
             {
                 indices.Add(new List<int>());
@@ -113,7 +114,7 @@ namespace ModelColourEditor
                         colors.Add(color);
                         normals.Add(sharedMesh.normals[index]);
                         tangents.Add(sharedMesh.tangents[index]);
-                        uvs.Add(sharedMesh.uv[index]);
+                        if (hasUvs) uvs.Add(sharedMesh.uv[index]);
                         blendShapeData.AddIndex(index);
                     }
 
