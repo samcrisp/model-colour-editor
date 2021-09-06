@@ -1,6 +1,6 @@
 {
     "name": "com.skatebee.model-colour-editor",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "displayName": "Model Colour Editor",
     "description": "Import material colours as vertex colours, override mesh colours on import, and manage mesh colours from a centralised editor window.",
     "unity": "2019.3",
