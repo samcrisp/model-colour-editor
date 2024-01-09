@@ -10,6 +10,7 @@ using UnityEngine.UIElements;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.UI;
 using UnityEngine.Rendering;
+using Newtonsoft.Json;
 
 namespace ModelColourEditor
 {
@@ -52,6 +53,7 @@ namespace ModelColourEditor
                 if (_instance == null)
                 {
                     _instance = ScriptableObject.CreateInstance<ModelColourEditorSettings>();
+                    _instance.ReadSettingsFromCache();
                 }
 
                 return _instance;
@@ -71,6 +73,81 @@ namespace ModelColourEditor
 
         public Material defaultMaterial;
         public bool importMaterialColoursByDefault;
+        
+        private void ReadSettingsFromCache()
+        {
+            if (!File.Exists(CACHE_FILE_PATH))
+                return;
+
+            Debug.Log($"Reading back contents from ModelColourEditor cache @ {CACHE_FILE_PATH}");
+            var cachedJsonString = File.ReadAllText(CACHE_FILE_PATH);
+            
+            // Deserialize the JSON string to an anonymous object
+            var cacheFormat = new
+            {
+                defaultMaterialGuid = "", 
+                importMaterialColoursByDefault = false
+            };
+            var data = JsonConvert.DeserializeAnonymousType(cachedJsonString, cacheFormat);
+            
+            // Load default a material using cached GUID
+            var path = AssetDatabase.GUIDToAssetPath(data.defaultMaterialGuid);
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+
+            if (material == null)
+            {
+                Debug.Log($"ModelColourEditor could not load material from GUID: {data.defaultMaterialGuid}");
+                return;
+            }
+            
+            // Apply cached settings
+            defaultMaterial = material;
+            importMaterialColoursByDefault = data.importMaterialColoursByDefault;
+        }
+
+        private void WriteSettingsToCache()
+        {
+            if (defaultMaterial == null)
+            {
+                Debug.Log("No Default Material for ModelColourEditor Settings Instance Set!");
+                return;
+            }
+
+            // Get the default material guid
+            var defaultMaterialAssetPath = AssetDatabase.GetAssetPath(defaultMaterial);
+            var defaultMaterialGuid = AssetDatabase.AssetPathToGUID(defaultMaterialAssetPath);
+
+            // Serialize to JSON
+            var cachedValues = new
+            {
+                defaultMaterialGuid, 
+                importMaterialColoursByDefault
+            };
+            var jsonString = JsonConvert.SerializeObject(cachedValues, Formatting.Indented);
+
+            // Write the output script to file
+            File.WriteAllText(CACHE_FILE_PATH, jsonString);
+            
+            AssetDatabase.ImportAsset(CACHE_FILE_PATH);
+        }
+
+        private void OnValidate() => WriteSettingsToCache();
+
+        /* About caching our settings to a text file:
+        During a fresh import, ModelColourEditorSettings.Instance fails to load from asset database due to the order of Unitys import process.
+        This results in the plugin generating a fresh settings instance as a fallback, with an null default material and importByDefault set to false.
+        Unfortunately, ScriptableObjects import way later than primitive asset types like shaders, materials and textures and unfortunately, models.
+
+        So as a workaround, we stash any non-default values into a json-formatted .cache file.
+        Text storage is required for a few reason:
+        Storing the cache file in git to be shared across collaborators
+        Allows us to use File.ReadAllText to work outside of the asset import order.
+        
+        An alternative could have been to remove the Settings ScriptableObject asset entirely,
+        and write settings to an auto-generated script, but this is not viable when using ModelColourEditor through the package manager.
+        This is because we cannot reliably modify scripts that reside in the package cache,
+        and it's not simply to grant package scripts exposure to scripts that reside inside the main project assemblies. 
+        */
     }
 
     public static class ModelColourEditorSettingsRegister
