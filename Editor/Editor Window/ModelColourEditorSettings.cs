@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using UnityEditor;
@@ -97,24 +98,19 @@ namespace ModelColourEditor
 
         private void WriteSettingsToCache()
         {
-            if (defaultMaterial == null)
-            {
-                Debug.Log("No Default Material for ModelColourEditor Settings Instance Set!");
-                return;
-            }
-
             // Get the default material guid
             var defaultMaterialAssetPath = AssetDatabase.GetAssetPath(defaultMaterial);
             var defaultMaterialGuid = AssetDatabase.AssetPathToGUID(defaultMaterialAssetPath);
 
             // Serialize to JSON
-            var cachedValues = new
+            var cachedValues = new CacheFormat
             {
-                defaultMaterialGuid, 
-                importMaterialColoursByDefault
+                defaultMaterialGuid = defaultMaterialGuid,
+                importMaterialColoursByDefault = importMaterialColoursByDefault
             };
+            
             var jsonString = JsonUtility.ToJson(cachedValues, true);
-
+            
             // Write the output script to file
             File.WriteAllText(CACHE_FILE_PATH, jsonString);
             
@@ -123,15 +119,16 @@ namespace ModelColourEditor
 
         private void OnValidate() => WriteSettingsToCache();
         
+        [Serializable]
         private class CacheFormat
         {
-            public readonly string defaultMaterialGuid = "";
-            public readonly bool importMaterialColoursByDefault = false;
+            public string defaultMaterialGuid;
+            public bool importMaterialColoursByDefault;
         }
 
         /* About caching our settings to a text file:
-        During a fresh import, ModelColourEditorSettings.Instance fails to load from asset database due to the order of Unitys import process.
-        This results in the plugin generating a fresh settings instance as a fallback, with an null default material and importByDefault set to false.
+        During a fresh import, ModelColourEditorSettings.Instance fails to load from asset database due to the order of Unity's import process.
+        This results in the plugin generating a fresh settings instance as a fallback, with a null default material and importByDefault set to false.
         Unfortunately, ScriptableObjects import way later than primitive asset types like shaders, materials and textures and unfortunately, models.
 
         So as a workaround, we stash any non-default values into a json-formatted .cache file.
@@ -142,7 +139,7 @@ namespace ModelColourEditor
         An alternative could have been to remove the Settings ScriptableObject asset entirely,
         and write settings to an auto-generated script, but this is not viable when using ModelColourEditor through the package manager.
         This is because we cannot reliably modify scripts that reside in the package cache,
-        and it's not simply to grant package scripts exposure to scripts that reside inside the main project assemblies. 
+        and it's not simple to grant package scripts exposure to scripts that reside inside the main project assemblies.
         */
     }
 
