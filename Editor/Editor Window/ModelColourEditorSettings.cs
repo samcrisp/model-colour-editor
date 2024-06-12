@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
-using UnityEditor.PackageManager;
-using UnityEditor.PackageManager.UI;
 using UnityEngine.Rendering;
-using Newtonsoft.Json;
 
 namespace ModelColourEditor
 {
@@ -82,13 +77,8 @@ namespace ModelColourEditor
             Debug.Log($"Reading back contents from ModelColourEditor cache @ {CACHE_FILE_PATH}");
             var cachedJsonString = File.ReadAllText(CACHE_FILE_PATH);
             
-            // Deserialize the JSON string to an anonymous object
-            var cacheFormat = new
-            {
-                defaultMaterialGuid = "", 
-                importMaterialColoursByDefault = false
-            };
-            var data = JsonConvert.DeserializeAnonymousType(cachedJsonString, cacheFormat);
+            // Deserialize the JSON string
+            var data = JsonUtility.FromJson<CacheFormat>(cachedJsonString);
             
             // Load default a material using cached GUID
             var path = AssetDatabase.GUIDToAssetPath(data.defaultMaterialGuid);
@@ -123,7 +113,7 @@ namespace ModelColourEditor
                 defaultMaterialGuid, 
                 importMaterialColoursByDefault
             };
-            var jsonString = JsonConvert.SerializeObject(cachedValues, Formatting.Indented);
+            var jsonString = JsonUtility.ToJson(cachedValues, true);
 
             // Write the output script to file
             File.WriteAllText(CACHE_FILE_PATH, jsonString);
@@ -132,6 +122,12 @@ namespace ModelColourEditor
         }
 
         private void OnValidate() => WriteSettingsToCache();
+        
+        private class CacheFormat
+        {
+            public readonly string defaultMaterialGuid = "";
+            public readonly bool importMaterialColoursByDefault = false;
+        }
 
         /* About caching our settings to a text file:
         During a fresh import, ModelColourEditorSettings.Instance fails to load from asset database due to the order of Unitys import process.
@@ -436,5 +432,6 @@ namespace ModelColourEditor
             var material = AssetDatabase.LoadAssetAtPath<Material>(path);
             defaultMaterialProperty.objectReferenceValue = material;
         }
+
     }
 }
