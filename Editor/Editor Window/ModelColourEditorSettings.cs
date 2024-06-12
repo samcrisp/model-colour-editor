@@ -12,7 +12,7 @@ namespace ModelColourEditor
     public class ModelColourEditorSettings : ScriptableObject
     {
         private const string EDITOR_PREFS_KEY = "ModelColourEditor.Settings";
-
+        private const string CACHE_FILE_PATH  = "Assets/ModelColourEditor.cache";
         public static bool HasAsset { get; private set; }
 
         private static ModelColourEditorSettings _instance;
